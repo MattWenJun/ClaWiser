@@ -1,7 +1,7 @@
 ---
 name: memory-deposit
-description: 搭建完整的 6 层记忆系统。OpenClaw 出厂自带前 3 层，本 skill 补齐第 4 层（完整对话合并）、确保第 5 层（向量召回）生效、搭建第 6 层（Git 版本管理），并建立标准目录约定。安装后 agent 能真正记住细节、恢复上下文、回溯历史。
-version: 0.1.0
+description: 检查并补齐 6 层记忆系统。检查当前 workspace 的记忆配置是否完整，缺什么补什么。已完成则报告状态，未完成则引导逐步配置。可反复执行。
+version: 0.2.0
 author: Matt (MindCode)
 tags: [memory, foundation, clawise]
 requires: []
@@ -10,42 +10,52 @@ layer: foundation
 
 # Memory Deposit — 记忆沉淀
 
-出厂有 3 层记忆（对话上下文、每日笔记、长期记忆），本 skill 补齐第 4、5、6 层。按顺序执行以下 6 步。
+检查 workspace 的 6 层记忆系统是否完整，缺什么补什么。
 
-## Step 1: 建目录 + 安装脚本
+## 检查清单
 
-```bash
-mkdir -p memory/transcripts memory/projects memory/voice scripts
-```
+按顺序逐项检查。已完成的跳过，未完成的执行对应步骤。
 
-从本 skill 的 `scripts/` 目录复制以下文件到 workspace 的 `scripts/`：
-- `merge-daily-transcript.js` — 对话合并
-- `auto-commit.sh` — Git 自动提交
+### 1. 目录结构
 
-验证：`ls scripts/merge-daily-transcript.js scripts/auto-commit.sh` 都存在。
+检查以下目录是否存在：
+- `memory/transcripts/`
+- `memory/projects/`
+- `memory/voice/`
+- `scripts/`
 
-## Step 2: Git 初始化
+缺的直接 `mkdir -p` 创建。
 
-如果 workspace 没有 `.git/`：
+### 2. 对话合并脚本
 
+检查 `scripts/merge-daily-transcript.js` 是否存在。
+
+不存在 → 从本 skill 的 `scripts/` 目录复制过来。
+
+### 3. Git 版本管理
+
+检查 workspace 是否有 `.git/`。
+
+不存在 →
 ```bash
 cd ~/.openclaw/workspace
 git init
 ```
+写入 `.gitignore`（排除 tmp/、.env*、*.secrets、node_modules/、.DS_Store），执行首次提交。
 
-写入 `.gitignore`（排除 tmp/、.env*、*.secrets、node_modules/、.DS_Store）。
+已存在 → 检查 `.gitignore` 是否包含上述排除项，缺的补上。
 
-执行首次提交：
-```bash
-git add -A && git commit -m "init: workspace under version control"
-```
+### 4. 自动提交脚本
 
-验证：`git log` 有 commit。
+检查 `scripts/auto-commit.sh` 是否存在。
 
-## Step 3: 配置 Heartbeat
+不存在 → 从本 skill 的 `scripts/` 目录复制过来。
 
-在 HEARTBEAT.md 里追加：
+### 5. Heartbeat 配置
 
+检查 HEARTBEAT.md 是否包含对话合并和自动提交的执行行。
+
+缺的追加：
 ```markdown
 # 对话合并
 运行 node scripts/merge-daily-transcript.js $(date +%Y-%m-%d)
@@ -54,22 +64,11 @@ git add -A && git commit -m "init: workspace under version control"
 运行 bash scripts/auto-commit.sh
 ```
 
-验证：HEARTBEAT.md 包含这两行。
+### 6. 记忆规则
 
-## Step 4: 确保向量召回生效
+检查 AGENTS.md 是否包含 `## 记忆规则` 段落。
 
-执行 `memory_search(query="测试")`。
-
-- **有结果** → 跳过。
-- **无结果或报错** → 告诉用户：
-
-> 记忆系统搭好了，但向量搜索需要一个 embedding API key 才能工作。你有 OpenAI、Gemini 或 Voyage 的 key 吗？配上之后我就能通过语义搜索找到历史对话和笔记了。
-
-用户配好后再跑一次确认。
-
-## Step 5: 写入记忆规则
-
-在 AGENTS.md 里追加：
+不存在 → 追加：
 
 ```markdown
 ## 记忆规则
@@ -81,8 +80,7 @@ git add -A && git commit -m "init: workspace under version control"
 - 踩过的坑和教训
 - 重要的数字、时间节点、外部信息
 
-不记录：
-- 临时状态、已完成的琐碎待办、工具调用中间输出
+不记录：临时状态、已完成的琐碎待办、工具调用中间输出
 
 ### 长期记忆（MEMORY.md）
 定期从每日笔记提炼，写入：
@@ -100,19 +98,32 @@ git add -A && git commit -m "init: workspace under version control"
 - tmp/ 下的文件不提交
 ```
 
-写入后告诉用户：已经把记忆规则写进了 AGENTS.md，后续你可以根据自己的需要继续调整。
+写入后告诉用户：已把记忆规则写进 AGENTS.md，后续可以根据需要调整。
 
-## Step 6: 自检
+### 7. 向量召回
 
-- [ ] `memory/transcripts/` 存在
-- [ ] `memory/projects/` 存在
-- [ ] 两个脚本在 `scripts/` 下
-- [ ] HEARTBEAT.md 有 merge 和 auto-commit
-- [ ] `memory_search` 能返回结果
-- [ ] `git log` 有 commit
-- [ ] AGENTS.md 有记忆规则
+执行 `memory_search(query="测试")`。
 
-全部通过 → 告诉用户安装完成。
+- **有结果** → 在工作，完成。
+- **无结果或报错** → 告诉用户：
+
+> 向量搜索需要一个 embedding API key 才能工作。OpenClaw 支持 OpenAI、Gemini、Voyage、Mistral 的 embedding。你有哪个的 key？配上之后我就能通过语义搜索找到历史对话和笔记了。
+
+用户配好后再跑一次确认。
+
+---
+
+## 完成
+
+全部检查通过后，告诉用户当前状态：
+
+> Memory Deposit 配置完整。6 层记忆系统已就绪：
+> - ✅ 对话上下文（出厂自带）
+> - ✅ 每日笔记（出厂自带）
+> - ✅ 长期记忆（出厂自带）
+> - ✅ 完整对话合并（transcripts/）
+> - ✅ 向量召回
+> - ✅ Git 版本管理
 
 ## 与其他 ClaWise 模块的关系
 
