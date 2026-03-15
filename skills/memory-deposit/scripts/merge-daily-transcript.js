@@ -16,6 +16,23 @@ const SESSIONS_DIR = path.join(HOME, '.openclaw', 'agents', 'main', 'sessions');
 const VOICE_DIR = path.join(WORKSPACE, 'memory', 'voice');
 const OUTPUT_DIR = path.join(WORKSPACE, 'memory', 'transcripts');
 const SESSIONS_JSON = path.join(SESSIONS_DIR, 'sessions.json');
+const IDENTITY_FILE = path.join(WORKSPACE, 'IDENTITY.md');
+
+// ============================================================
+// Agent Name Detection (for voice JSONL role fallback)
+// ============================================================
+
+function getAgentName() {
+  // 从 IDENTITY.md 读取 agent 名字
+  try {
+    const text = fs.readFileSync(IDENTITY_FILE, 'utf8');
+    const match = text.match(/\*\*Name:\*\*\s*(.+)/);
+    if (match) return match[1].trim().toLowerCase();
+  } catch (e) { /* file may not exist */ }
+  return null;
+}
+
+const AGENT_NAME = getAgentName();
 
 // ============================================================
 // Session → Group Name Mapping
@@ -231,10 +248,15 @@ if (fs.existsSync(voiceFile)) {
 
       // voice JSONL role 判断：
       // 1. 优先读 role 字段（标准值 "user"/"assistant"）
-      // 2. fallback: from 字段，"assistant" → assistant，其他 → user
-      const role = obj.role
-        ? (obj.role === 'assistant' ? 'assistant' : 'user')
-        : ((obj.from || '').toLowerCase() === 'assistant' ? 'assistant' : 'user');
+      // 2. fallback: from 字段与 IDENTITY.md 里的 agent 名字比对
+      // 3. 都没有：from === "assistant" → assistant，其他 → user
+      let role;
+      if (obj.role) {
+        role = obj.role === 'assistant' ? 'assistant' : 'user';
+      } else {
+        const from = (obj.from || '').toLowerCase();
+        role = (from === 'assistant' || (AGENT_NAME && from === AGENT_NAME)) ? 'assistant' : 'user';
+      }
       allMessages.push({
         ts,
         role,
