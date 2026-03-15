@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // merge-daily-transcript.js — 合并当天的 session transcript + voice 为清洗后的对话日志
-// 用法: node scripts/merge-daily-transcript.js [YYYY-MM-DD]
-// 不传日期则默认为昨天
+// 用法: node scripts/merge-daily-transcript.js [YYYY-MM-DD] [--tz Asia/Shanghai]
+// 不传日期则默认为昨天（按用户时区）
+// 时区优先级：--tz 参数 > USER.md > 系统本地时区
 
 const fs = require('fs');
 const path = require('path');
@@ -17,18 +18,88 @@ const VOICE_DIR = path.join(WORKSPACE, 'memory', 'voice');
 const OUTPUT_DIR = path.join(WORKSPACE, 'memory', 'transcripts');
 const SESSIONS_JSON = path.join(SESSIONS_DIR, 'sessions.json');
 const IDENTITY_FILE = path.join(WORKSPACE, 'IDENTITY.md');
+const SOUL_FILE = path.join(WORKSPACE, 'SOUL.md');
+const USER_FILE = path.join(WORKSPACE, 'USER.md');
+
+// ============================================================
+// 参数解析
+// ============================================================
+
+let argDate = null;
+let argTz = null;
+
+for (let i = 2; i < process.argv.length; i++) {
+  if (process.argv[i] === '--tz' && process.argv[i + 1]) {
+    argTz = process.argv[++i];
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(process.argv[i])) {
+    argDate = process.argv[i];
+  }
+}
+
+// ============================================================
+// 时区检测：--tz > USER.md > 系统本地
+// ============================================================
+
+function detectTimezone() {
+  // 1. 命令行参数
+  if (argTz) return argTz;
+
+  // 2. USER.md 里的 Timezone 字段
+  try {
+    const text = fs.readFileSync(USER_FILE, 'utf8');
+    // 匹配常见格式：**Timezone:** xxx 或 - Timezone: xxx
+    const match = text.match(/\*?\*?Timezone\*?\*?[：:]\s*.*?([A-Z][a-z]+\/[A-Za-z_]+)/i);
+    if (match) return match[1];
+  } catch (e) { /* file may not exist */ }
+
+  // 3. 系统本地时区
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+const TIMEZONE = detectTimezone();
+
+// 用 IANA 时区计算日期边界
+function getDateBounds(dateStr) {
+  // 利用 Intl 获取指定时区的 UTC 偏移
+  const probe = new Date(dateStr + 'T12:00:00Z');
+  const utcStr = probe.toLocaleString('en-US', { timeZone: 'UTC' });
+  const tzStr = probe.toLocaleString('en-US', { timeZone: TIMEZONE });
+  const offsetMs = new Date(utcStr).getTime() - new Date(tzStr).getTime();
+
+  const start = new Date(dateStr + 'T00:00:00Z');
+  start.setTime(start.getTime() + offsetMs);
+  const end = new Date(dateStr + 'T23:59:59.999Z');
+  end.setTime(end.getTime() + offsetMs);
+
+  return { start, end, startMs: start.getTime(), endMs: end.getTime() };
+}
+
+function getYesterday() {
+  const now = new Date();
+  // 用时区感知的日期计算
+  const todayStr = now.toLocaleDateString('sv-SE', { timeZone: TIMEZONE }); // sv-SE 格式: YYYY-MM-DD
+  const today = new Date(todayStr + 'T12:00:00Z');
+  today.setDate(today.getDate() - 1);
+  return today.toISOString().slice(0, 10);
+}
 
 // ============================================================
 // Agent Name Detection (for voice JSONL role fallback)
 // ============================================================
 
 function getAgentName() {
-  // 从 IDENTITY.md 读取 agent 名字
-  try {
-    const text = fs.readFileSync(IDENTITY_FILE, 'utf8');
-    const match = text.match(/\*\*Name:\*\*\s*(.+)/);
-    if (match) return match[1].trim().toLowerCase();
-  } catch (e) { /* file may not exist */ }
+  // 尝试从 IDENTITY.md 读取
+  for (const file of [IDENTITY_FILE, SOUL_FILE]) {
+    try {
+      const text = fs.readFileSync(file, 'utf8');
+      // 支持多种格式：**Name:** xxx / - Name: xxx / # Name: xxx
+      const match = text.match(/(?:\*\*Name\*\*|[-#]\s*Name)[：:]\s*(.+)/i);
+      if (match) {
+        const name = match[1].replace(/\*+/g, '').trim().toLowerCase();
+        if (name) return name;
+      }
+    } catch (e) { /* file may not exist */ }
+  }
   return null;
 }
 
@@ -59,8 +130,8 @@ function buildSessionGroupMap() {
 function extractUserText(fullText) {
   let t = fullText;
 
-  // Strip RULE INJECTION block
-  t = t.replace(/^⚠️ RULE INJECTION[^\n]*\n(?:(?:\d+\.|[-•*]).*\n?)*/m, '').trim();
+  // Strip RULE INJECTION blocks (global: handle multiple)
+  t = t.replace(/^⚠️ RULE INJECTION[^\n]*\n(?:(?:\d+\.|[-•*]).*\n?)*/gm, '').trim();
 
   // Strip "Conversation info" JSON block
   t = t.replace(/^Conversation info \(untrusted metadata\):\s*```json\s*\{[\s\S]*?\}\s*```/m, '').trim();
@@ -78,9 +149,6 @@ function extractUserText(fullText) {
     } catch (e) {}
     t = t.replace(/Replied message \(untrusted, for context\):\s*```json\s*\{[\s\S]*?\}\s*```/m, '').trim();
   }
-
-  // Strip remaining RULE INJECTION blocks
-  t = t.replace(/^⚠️ RULE INJECTION[^\n]*\n(?:(?:\d+\.|[-•*]).*\n?)*/m, '').trim();
 
   // Strip cron tail lines
   t = t.replace(/^Current time:.*$/m, '').trim();
@@ -152,7 +220,7 @@ function classifyMessage(role, text) {
       return { action: 'skip', reason: 'short_fragment' };
     }
 
-    // Long structured content (summaries, reports) — mark to prevent truncation
+    // Long structured content — mark to prevent truncation
     if (t.length > 2000) return { action: 'keep', cls: '回复', long: true };
 
     return { action: 'keep', cls: '回复' };
@@ -165,24 +233,11 @@ function classifyMessage(role, text) {
 // Main
 // ============================================================
 
-const arg = process.argv[2];
-let targetDate;
-if (arg) {
-  targetDate = arg;
-} else {
-  // 默认昨天（按本地时区）
-  const now = new Date();
-  now.setDate(now.getDate() - 1);
-  targetDate = now.toISOString().slice(0, 10);
-}
+const targetDate = argDate || getYesterday();
+const bounds = getDateBounds(targetDate);
 
-// 用 UTC+8 作为日期边界（OpenClaw 用户多在亚洲时区，可按需调整）
-const dayStart = new Date(targetDate + 'T00:00:00+08:00');
-const dayEnd = new Date(targetDate + 'T23:59:59.999+08:00');
-const startMs = dayStart.getTime();
-const endMs = dayEnd.getTime();
-
-console.error(`[merge] target: ${targetDate} (${dayStart.toISOString()} ~ ${dayEnd.toISOString()})`);
+console.error(`[merge] target: ${targetDate} | tz: ${TIMEZONE} | agent: ${AGENT_NAME || '(unknown)'}`);
+console.error(`[merge] range: ${bounds.start.toISOString()} ~ ${bounds.end.toISOString()}`);
 
 if (!fs.existsSync(SESSIONS_DIR)) {
   console.error(`[merge] sessions dir not found: ${SESSIONS_DIR}`);
@@ -192,17 +247,29 @@ if (!fs.existsSync(SESSIONS_DIR)) {
 // 1. Collect messages from session transcripts
 const allMessages = [];
 const sessionGroupMap = buildSessionGroupMap();
+let filesScanned = 0;
+let filesSkipped = 0;
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB — 超过的跳过并警告
 
 const sessionFiles = fs.readdirSync(SESSIONS_DIR).filter(f => f.endsWith('.jsonl'));
 for (const file of sessionFiles) {
   const filePath = path.join(SESSIONS_DIR, file);
   const stat = fs.statSync(filePath);
 
+  // 跳过超大文件
+  if (stat.size > MAX_FILE_SIZE) {
+    console.error(`[merge] WARN: skipping oversized file ${file} (${(stat.size / 1024 / 1024).toFixed(1)}MB)`);
+    filesSkipped++;
+    continue;
+  }
+
   // Quick filter by file modification time
-  const dayBefore = new Date(dayStart); dayBefore.setDate(dayBefore.getDate() - 1);
-  const dayAfter = new Date(dayEnd); dayAfter.setDate(dayAfter.getDate() + 1);
+  const dayBefore = new Date(bounds.start); dayBefore.setDate(dayBefore.getDate() - 1);
+  const dayAfter = new Date(bounds.end); dayAfter.setDate(dayAfter.getDate() + 1);
   if (stat.mtime < dayBefore || stat.birthtime > dayAfter) continue;
 
+  filesScanned++;
   const sessionId = file.replace(/(-topic-\d+)?\.jsonl$/, '');
   const groupName = sessionGroupMap[sessionId] || null;
 
@@ -219,7 +286,9 @@ for (const file of sessionFiles) {
                 : msg.timestamp ? (typeof msg.timestamp === 'number' ? msg.timestamp : new Date(msg.timestamp).getTime())
                 : 0;
 
-      if (ts < startMs || ts > endMs) continue;
+      // 校验时间戳有效性
+      if (!ts || isNaN(ts)) continue;
+      if (ts < bounds.startMs || ts > bounds.endMs) continue;
 
       const texts = [];
       const content = msg.content || [];
@@ -238,18 +307,20 @@ for (const file of sessionFiles) {
 
 // 2. Load voice messages (if any)
 const voiceFile = path.join(VOICE_DIR, `${targetDate}.jsonl`);
+let voiceLoaded = false;
 if (fs.existsSync(voiceFile)) {
+  voiceLoaded = true;
   const lines = fs.readFileSync(voiceFile, 'utf8').split('\n').filter(Boolean);
   for (const line of lines) {
     try {
       const obj = JSON.parse(line);
       const ts = new Date(obj.ts).getTime();
-      if (ts < startMs || ts > endMs) continue;
 
-      // voice JSONL role 判断：
-      // 1. 优先读 role 字段（标准值 "user"/"assistant"）
-      // 2. fallback: from 字段与 IDENTITY.md 里的 agent 名字比对
-      // 3. 都没有：from === "assistant" → assistant，其他 → user
+      // 校验时间戳
+      if (!ts || isNaN(ts)) continue;
+      if (ts < bounds.startMs || ts > bounds.endMs) continue;
+
+      // role 判断：role 字段 > from + IDENTITY.md > from === "assistant"
       let role;
       if (obj.role) {
         role = obj.role === 'assistant' ? 'assistant' : 'user';
@@ -302,44 +373,47 @@ for (const m of deduped) {
 // 6. Merge consecutive same-role same-minute fragments
 const merged = [];
 for (const m of cleaned) {
-  const timeStr = new Date(m.ts).toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit' });
+  const timeStr = new Date(m.ts).toLocaleTimeString('zh-CN', { timeZone: TIMEZONE, hour: '2-digit', minute: '2-digit' });
   const last = merged[merged.length - 1];
 
   if (last && last.role === m.role && last.timeStr === timeStr && last.cls === m.cls && last.groupName === m.groupName) {
     last.text += '\n\n' + m.text;
+    last.long = last.long || m.long; // 保留 long 标记
   } else {
     merged.push({ ...m, timeStr });
   }
 }
 
 // 7. Format output
-const lines = [];
-lines.push(`# ${targetDate} 对话记录`);
-lines.push(`> 自动合并 + 清洗自 session transcripts`);
-lines.push(`> 生成时间: ${new Date().toISOString()}`);
-lines.push(`> 原始: ${stats.total} | 保留: ${stats.kept} | 跳过: ${stats.skipped}`);
-lines.push('');
+const output = [];
+output.push(`# ${targetDate} 对话记录`);
+output.push(`> 自动合并 + 清洗自 session transcripts`);
+output.push(`> 生成时间: ${new Date().toISOString()} | 时区: ${TIMEZONE}`);
+output.push(`> 原始: ${stats.total} | 保留: ${stats.kept} | 跳过: ${stats.skipped}`);
+output.push('');
 
 for (const m of merged) {
   const roleLabel = m.role === 'user' ? '👤 用户' : '🤖 Agent';
   const clsLabel = m.cls ? ` [${m.cls}]` : '';
   const location = m.groupName ? ` 📌${m.groupName}` : '';
 
-  lines.push(`### ${m.timeStr} ${roleLabel}${clsLabel}${location}`);
+  output.push(`### ${m.timeStr} ${roleLabel}${clsLabel}${location}`);
 
   // Truncate very long messages (long structured content gets more room)
   const maxLen = m.long ? 8000 : 3000;
   const text = m.text.length > maxLen ? m.text.slice(0, maxLen) + '\n...(截断)' : m.text;
-  lines.push(text);
-  lines.push('');
+  output.push(text);
+  output.push('');
 }
 
 // 8. Write
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 const outPath = path.join(OUTPUT_DIR, `${targetDate}.md`);
-fs.writeFileSync(outPath, lines.join('\n'), 'utf8');
+fs.writeFileSync(outPath, output.join('\n'), 'utf8');
 
+// 9. Stats
 console.log(`Written ${merged.length} entries to ${outPath}`);
+console.log(`  Sessions scanned: ${filesScanned} | Voice: ${voiceLoaded ? 'yes' : 'no'} | Skipped(oversize): ${filesSkipped}`);
 console.log(`  Raw: ${stats.total} → Kept: ${stats.kept} → Merged: ${merged.length} | Skipped: ${stats.skipped}`);
 for (const [reason, count] of Object.entries(stats.skipReasons).sort((a, b) => b[1] - a[1])) {
   console.log(`    ${reason}: ${count}`);

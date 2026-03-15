@@ -39,9 +39,11 @@ commit_group() {
 # 按类型分组提交
 commit_group '^memory/ideas\.' "ideas: 更新想法池"
 
-for f in $(git status --short | grep "memory/writings/" | sed 's/^...//'); do
+git status --short | grep "memory/writings/" | while IFS= read -r line; do
+  f="${line:3}"
+  [ -n "$f" ] || continue
   fname=$(basename "$f" .md)
-  git add "$f" 2>/dev/null
+  git add -- "$f" 2>/dev/null
   git diff --cached --quiet 2>/dev/null || git commit -m "writings: 更新 $fname" 2>/dev/null
 done
 

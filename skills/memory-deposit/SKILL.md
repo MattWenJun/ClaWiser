@@ -21,7 +21,7 @@ tags: [memory, foundation, clawise]
 5. `.git/` 存在？
 6. HEARTBEAT.md 包含 `merge-daily-transcript` 和 `auto-commit`？
 7. AGENTS.md 包含 `## 记忆规则`？
-8. `memory_search(query="记忆")` 有结果？
+8. `memory_search(query="test memory recall")` 有结果？（如果 memory/ 下有文件的话）
 
 **全部通过** → 跳到「完成」报告状态。
 **任一未通过** → 按下面的步骤补齐。
