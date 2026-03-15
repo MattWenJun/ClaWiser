@@ -105,6 +105,20 @@ function getAgentName() {
 
 const AGENT_NAME = getAgentName();
 
+function getUserName() {
+  try {
+    const text = fs.readFileSync(USER_FILE, 'utf8');
+    const match = text.match(/(?:\*\*(?:Name|What to call them)\*\*|[-#]\s*(?:Name|What to call them))[：:]\s*(.+)/i);
+    if (match) return match[1].replace(/\*+/g, '').trim();
+  } catch (e) { /* file may not exist */ }
+  return null;
+}
+
+const USER_DISPLAY = getUserName() || '用户';
+const AGENT_DISPLAY = AGENT_NAME
+  ? AGENT_NAME.charAt(0).toUpperCase() + AGENT_NAME.slice(1)
+  : 'Agent';
+
 // ============================================================
 // Session → Group Name Mapping
 // ============================================================
@@ -393,7 +407,7 @@ output.push(`> 原始: ${stats.total} | 保留: ${stats.kept} | 跳过: ${stats.
 output.push('');
 
 for (const m of merged) {
-  const roleLabel = m.role === 'user' ? '👤 用户' : '🤖 Agent';
+  const roleLabel = m.role === 'user' ? `👤 ${USER_DISPLAY}` : `🤖 ${AGENT_DISPLAY}`;
   const clsLabel = m.cls ? ` [${m.cls}]` : '';
   const location = m.groupName ? ` 📌${m.groupName}` : '';
 
