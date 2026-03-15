@@ -44,6 +44,17 @@ mkdir -p memory/transcripts memory/projects memory/voice scripts
 
 验证：两个文件都在 `scripts/` 下。
 
+### A3. Voice JSONL 格式约定
+
+如果你会保存语音对话到 `memory/voice/YYYY-MM-DD.jsonl`，每条记录必须包含 `role` 字段：
+
+```json
+{"ts":"2026-03-15T20:00","role":"user","text":"语音转写内容"}
+{"ts":"2026-03-15T20:01","role":"assistant","text":"TTS回复内容"}
+```
+
+`role` 用 `"user"` 或 `"assistant"`，不要用实际名字。merge 脚本依赖这个字段区分发话人。
+
 ---
 
 ## 步骤 B：配置

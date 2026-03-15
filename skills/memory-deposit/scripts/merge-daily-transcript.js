@@ -229,11 +229,15 @@ if (fs.existsSync(voiceFile)) {
       const ts = new Date(obj.ts).getTime();
       if (ts < startMs || ts > endMs) continue;
 
-      // voice JSONL 的 from 字段：标准值为 "user"/"assistant"
-      // 兼容旧格式：from 存用户名时，只有明确是 "assistant" 才标 assistant，其他都是 user
+      // voice JSONL role 判断：
+      // 1. 优先读 role 字段（标准值 "user"/"assistant"）
+      // 2. fallback: from 字段，"assistant" → assistant，其他 → user
+      const role = obj.role
+        ? (obj.role === 'assistant' ? 'assistant' : 'user')
+        : ((obj.from || '').toLowerCase() === 'assistant' ? 'assistant' : 'user');
       allMessages.push({
         ts,
-        role: (obj.from || '').toLowerCase() === 'assistant' ? 'assistant' : 'user',
+        role,
         text: `🎤 [语音] ${obj.text}`,
         source: 'voice'
       });
