@@ -10,7 +10,7 @@ cd "$(dirname "$0")/.."
 
 # 没有变更就退出
 if git diff --quiet 2>/dev/null && git diff --cached --quiet 2>/dev/null && \
-   [ -z "$(git ls-files --others --exclude-standard 2>/dev/null)" ]; then
+   [ -z "$(git ls-files --others --exclude-standard 2>/dev/null | head -1)" ]; then
   exit 0
 fi
 
@@ -25,7 +25,7 @@ commit_group() {
     matched=1
     git add -- "$file" 2>/dev/null || true
   done < <(
-    git status --short | while IFS= read -r line; do
+    git status --short -uall | while IFS= read -r line; do
       file="${line:3}"
       [[ "$file" =~ $pattern ]] && printf '%s\n' "$file"
     done
@@ -39,7 +39,7 @@ commit_group() {
 # 按类型分组提交
 commit_group '^memory/ideas\.' "ideas: 更新想法池"
 
-git status --short | grep "memory/writings/" | while IFS= read -r line; do
+git status --short -uall | grep "memory/writings/" | while IFS= read -r line; do
   f="${line:3}"
   [ -n "$f" ] || continue
   fname=$(basename "$f" .md)
