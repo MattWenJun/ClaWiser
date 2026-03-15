@@ -135,6 +135,9 @@ function classifyMessage(role, text) {
       return { action: 'skip', reason: 'short_fragment' };
     }
 
+    // Long structured content (summaries, reports) — mark to prevent truncation
+    if (t.length > 2000) return { action: 'keep', cls: '回复', long: true };
+
     return { action: 'keep', cls: '回复' };
   }
 
@@ -226,9 +229,12 @@ if (fs.existsSync(voiceFile)) {
       const ts = new Date(obj.ts).getTime();
       if (ts < startMs || ts > endMs) continue;
 
+      // voice JSONL 的 from 字段通常存用户名（如 "matt"），不是 "user"/"assistant"
+      // 约定：如果 from 不是 agent 的名字，就认为是用户
+      const isAgent = ['assistant', 'agent', 'luna', 'bot'].includes((obj.from || '').toLowerCase());
       allMessages.push({
         ts,
-        role: obj.from === 'user' ? 'user' : 'assistant',
+        role: isAgent ? 'assistant' : 'user',
         text: `🎤 [语音] ${obj.text}`,
         source: 'voice'
       });
@@ -262,6 +268,7 @@ for (const m of deduped) {
     role: m.role,
     text: result.cleanedText || m.text,
     cls: result.cls || null,
+    long: result.long || false,
     source: m.source,
     groupName: m.groupName || null
   });
@@ -295,8 +302,8 @@ for (const m of merged) {
 
   lines.push(`### ${m.timeStr} ${roleLabel}${clsLabel}${location}`);
 
-  // Truncate very long messages
-  const maxLen = 3000;
+  // Truncate very long messages (long structured content gets more room)
+  const maxLen = m.long ? 8000 : 3000;
   const text = m.text.length > maxLen ? m.text.slice(0, maxLen) + '\n...(截断)' : m.text;
   lines.push(text);
   lines.push('');
