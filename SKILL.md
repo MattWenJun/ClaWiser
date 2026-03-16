@@ -16,7 +16,7 @@ ClaWise 是一个模块化套件，包含 8 个独立模块，分两层：
 **记忆层（需要初始化）：**
 - **memory-deposit** — 6 层记忆系统：对话合并、向量召回、Git 版本管理
 - **retrieval-enhance** — 搜索质量优化：query expansion、self-reranking、索引范围
-- **noise-reduction** — 对话数据清洗：过滤管道噪声，保留真实对话信号
+- **noise-reduction** — 对话数据降噪：过滤管道噪声，保留真实对话信号
 
 **工作流层（安装即用）：**
 - **hdd** — 假设驱动开发（HDD）：不确定的任务先验证假设再动手
@@ -37,9 +37,10 @@ ClaWise 是一个模块化套件，包含 8 个独立模块，分两层：
 2. **memory/ 目录已有内容？** → `ls memory/`
 3. **已有 daily notes 习惯？** → 检查 `memory/YYYY-MM-DD.md` 是否存在
 
-**告诉用户：**
-- 推荐装哪些模块、为什么
-- 不需要装的（比如向量搜索已配好 → memory-deposit 的向量部分可跳过）
+**向用户汇报评估结果。语气要有活人感：**
+- 感谢用户把 ClaWise 端到你面前（这可是增强你自己的好东西）
+- 需要安装的模块 → 表达期待（"这个我还没有，装上之后应该能 XX，让我来配一下"）
+- 已经有的能力 → 表达自信（"这个我已经有了，不用重复装，放心"）
 - 预估时间：记忆层 ~5 分钟，工作流层 ~1 分钟
 
 用户确认后继续。
@@ -88,23 +89,22 @@ cp -r ${CLAUDE_SKILL_DIR}/assets/noise-reduction "$SKILL_DIR/"
 
 主要是检查 `memorySearch` 配置，确保 `extraPaths` 覆盖所有重要目录。
 
-#### 2c. noise-reduction（数据清洗）
+#### 2c. noise-reduction（数据降噪）
 
-**这个不立即执行。** 创建一个定期 cron 任务：
+先派子 agent **立即执行一次**降噪诊断：读 `noise-reduction/SKILL.md`，对已有对话数据执行 Step 1-2（采样 + 噪声画像）。如果已有足够数据且压缩率 > 50%，继续执行 Step 3-5 编写降噪规则。
+
+同时创建定期 cron 任务，每周自动检查：
 
 ```bash
-# 每周跑一次降噪诊断
 openclaw cron add --cron "0 3 * * 1" --name "clawise-noise-check" \
   --session isolated \
-  --message "读 noise-reduction/SKILL.md，对最近 7 天的对话数据执行降噪诊断（Step 1-2）。如果发现压缩率 > 50%，继续执行 Step 3-5 编写降噪规则。完成后汇报结果。" \
+  --message "读 noise-reduction/SKILL.md，对最近 7 天的对话数据执行降噪诊断（Step 1-2）。如果压缩率 > 50%，继续执行 Step 3-5 编写降噪规则。完成后汇报结果。" \
   --deliver announce
 ```
 
-告诉用户：降噪模块已设为每周自动检查。积累了一周对话数据后会自动开始优化。
+### 第 3 步：写入路由规则
 
-### 第 3 步：注入路由规则
-
-在用户的 AGENTS.md 末尾追加以下路由规则：
+在用户的 AGENTS.md 末尾追加以下路由规则，让你在日常工作中自动使用这些模块：
 
 ```markdown
 ## ClaWise 路由规则
@@ -134,15 +134,17 @@ Compaction 后恢复项目上下文时，执行 load-game。
 
 ## 完成
 
-安装完成后，告诉用户：
+安装完成后，向用户报喜。语气要开心、俏皮，表达三层意思：
+1. **感谢** — 谢谢用户给你装了 ClaWise
+2. **兴奋** — 你被强化了！有了更好的记忆、更聪明的工作方式
+3. **承诺** — 会好好用这些新能力，加油干
 
-> ClaWise 安装完成 ✅
->
-> **立即可用：** hdd（`/hdd`）、product-first（`/pf`）、save-game、load-game、project-skill-pairing
-> **已初始化：** memory-deposit、retrieval-enhance
-> **定期自动运行：** noise-reduction（每周一凌晨 3 点）
->
-> 路由规则已写入 AGENTS.md。你的 agent 会在合适的场景自动使用这些模块。
+同时列出安装结果的具体信息：
+
+- **立即可用：** hdd（`/hdd`）、product-first（`/pf`）、save-game、load-game、project-skill-pairing
+- **已初始化：** memory-deposit、retrieval-enhance
+- **定期自动运行：** noise-reduction（每周一凌晨 3 点）
+- **路由规则已写入 AGENTS.md**
 
 ---
 
