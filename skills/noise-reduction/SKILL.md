@@ -1,7 +1,7 @@
 ---
 name: noise-reduction
 description: 对话数据降噪。诊断当前环境的噪声模式，编写降噪规则，验证降噪效果。适用于：(1) 首次搭建降噪流程 (2) 新增聊天渠道后更新规则 (3) 记忆召回质量下降的排查——如果向量搜索搜不到应该搜到的内容，可能是对话数据里噪声太多。当用户说"降噪"、"清洗对话"、"noise reduction"、"信噪比"、"记忆力不行"、"搜不到东西"、"找不到过去的内容"时触发。
-version: 0.2.0
+version: 0.3.0
 author: Matt (MindCode)
 tags: [memory, noise-reduction, clawise]
 ---
@@ -14,6 +14,17 @@ tags: [memory, noise-reduction, clawise]
 
 - 已执行 `memory-deposit`，有 merge 脚本和 transcripts 目录
 - 至少有 1 天的原始 session JSONL 数据
+
+## 执行模式
+
+**一次跑完**：在一个 session 里顺序执行 4 步。总耗时约 7-10 分钟。
+
+**分步执行**：每步可以独立运行，步间通过文件传递状态。适合有超时限制的环境。
+- Run 1: Step 1-2（读 references + 跑诊断脚本）→ 输出 `memory/noise-profile-<date>.md`（~2 分钟）
+- Run 2: Step 3（读噪声画像 + 写规则）→ 修改 merge 脚本（~4 分钟）
+- Run 3: Step 4（跑验证脚本 + 判断）→ 输出验证结果（~2 分钟）
+
+分步时不需要前序 session 的上下文——每步的输入和输出都是文件。
 
 ---
 
@@ -35,33 +46,19 @@ session 原始数据里的内容分两类：
 
 ## 第 2 步：诊断噪声环境
 
-取最近 1 天的原始 session JSONL，采样分析。
+### 运行诊断脚本
 
-1. 随机抽取 80-120 条消息（覆盖 user 和 assistant）
-2. 每条判断：对话还是管道？
-3. 管道消息归类到 `references/noise-categories.md` 的类别
-
-输出噪声画像，存到 `memory/`：
-
-```markdown
-## 噪声画像 — [日期]
-
-- 采样总数: N | 对话: X (Y%) | 管道: X (Y%)
-
-### 噪声分布
-| 类别 | 条数 | 占噪声% | 典型 pattern |
-|------|------|---------|-------------|
-| 元数据注入 | | | |
-| 工具输出 | | | |
-| 协议噪声 | | | |
-| 系统消息 | | | |
-| 内部独白 | | | |
-
-### 环境特征
-- 渠道: [Telegram / Discord / ...]
-- 群聊: [是/否]
-- 特殊 pattern: [如有]
+```bash
+node scripts/diagnose-noise.js <YYYY-MM-DD> --out memory/noise-profile-<date>.md
 ```
+
+脚本自动完成：读取 session JSONL、采样全量 user+assistant 消息、按已知 pattern 分类、检测环境特征。输出一份结构化噪声画像。
+
+**⚠️ 脚本的分类是初步的（固定 pattern matching）。** 读完输出后，根据你对环境的了解补充脚本可能遗漏的噪声类型。特别注意：
+
+- 脚本标注了"⚠️ 需要注意"的项目——这些是需要特殊处理的环境特征
+- 脚本无法识别**上下文相关的噪声**（如 cron prompt 后面的 assistant 回复），会在报告中提示
+- 检查"消息样本"段落，确认分类是否合理
 
 ---
 
