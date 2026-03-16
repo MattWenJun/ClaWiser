@@ -54,9 +54,15 @@ ClaWiser 是一个模块化套件，包含 8 个独立模块，分两层：
 把以下模块从 `${CLAUDE_SKILL_DIR}/assets/` 复制到用户的 skill 目录：
 
 ```bash
-# 目标目录（根据平台调整）
-SKILL_DIR="$HOME/.openclaw/workspace/skills"  # OpenClaw
-# SKILL_DIR=".claude/skills"                   # Claude Code
+# 目标目录：当前 workspace 下的 skills/
+# OpenClaw agent 的 CWD 就是它自己的 workspace，用相对路径确保写入正确位置
+# ⚠️ 绝对不要用 $HOME/.openclaw/workspace/skills —— 多 agent 环境下会写错位置
+SKILL_DIR="skills"
+
+# Claude Code 用户取消注释下面这行：
+# SKILL_DIR=".claude/skills"
+
+mkdir -p "$SKILL_DIR"
 
 cp -r ${CLAUDE_SKILL_DIR}/assets/hdd "$SKILL_DIR/"
 cp -r ${CLAUDE_SKILL_DIR}/assets/product-first "$SKILL_DIR/"
