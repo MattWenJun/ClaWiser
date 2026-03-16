@@ -17,7 +17,7 @@ tags: [memory, noise-reduction, clawise]
 > "Identify the smallest set of high-signal tokens that maximize desired outcomes."
 > — Anthropic, *Effective Context Engineering for AI Agents*
 
-本 skill 不给你一套固定规则。**它教你诊断自己的环境、写自己的规则、验证自己的效果。** 因为每个 agent 的宿主环境不同——用的聊天渠道不同（Telegram / Discord / WhatsApp / Signal），OpenClaw 配置不同，接入的工具不同，噪声模式就不同。
+本 skill 不给你一套固定规则。**它教你诊断自己的环境、写自己的规则、验证自己的效果。** 因为每个 agent 的宿主环境不同——用的聊天渠道不同（Telegram / Discord / WhatsApp / Signal / Slack / Feishu），OpenClaw 配置不同，接入的工具不同，噪声模式就不同。
 
 ## 前置条件
 
@@ -39,9 +39,7 @@ tags: [memory, noise-reduction, clawise]
 | **工具输出** | 工具调用的原始返回 | JSON blob、文件路径列表、纯数字、`done`、`(no output)` |
 | **内部独白** | agent 的自我思考过程 | "Now let me check…"、"Let me read…" |
 
-你要保留的只有第一类：**对话**。其余全部是管道。
-
-背景知识：OpenAI 的 memory 系统只保留用户发言，连 agent 回复都丢弃。我们选择保留双方发言，因为 agent 的回复同样有信息价值。但"双方发言"之外的一切，都要清掉。
+你要保留的只有第一类：**对话**（用户和 agent 双方的发言）。其余全部是管道，清掉。
 
 ---
 
@@ -87,14 +85,14 @@ tags: [memory, noise-reduction, clawise]
 
 ## 第 3 步：编写降噪规则
 
-基于噪声画像，为你的 merge 脚本编写过滤规则。
+基于噪声画像，在 merge 脚本里编写过滤逻辑。
 
 ### 规则设计原则
 
 1. **按 role 分流**：user 消息和 assistant 消息的噪声模式不同，分开处理
 2. **先处理量大的**：从噪声画像里占比最高的类别开始写规则
 3. **保守过滤**：不确定的消息默认保留。误保留（多存了噪声）的代价远小于误杀（丢了对话）
-4. **规则要有 reason**：每条规则标注过滤原因，方便后续审计
+4. **规则要有 reason**：每条过滤规则标注原因（如 `skip('heartbeat')`），merge 脚本结束时统计各 reason 的 skip 数量并输出
 
 ### 常见噪声 pattern
 
@@ -112,20 +110,16 @@ tags: [memory, noise-reduction, clawise]
 - 工具输出：纯 JSON、纯数字、文件路径列表
 - 内部独白：以 `Now let me`、`Let me check` 等开头的自我对话
 
-### 实现方式
+### 统计输出
 
-规则怎么写、存在哪里，取决于你的 merge 脚本实现：
+在 merge 脚本末尾加一段统计，每次执行自动打印：
 
-**方式 A — 直接写在 merge 脚本里**
-规则作为函数逻辑硬编码。简单直接，适合规则稳定的环境。
+```
+[noise-reduction] 原始: 847 条 | 保留: 412 条 | 压缩率: 48.6%
+[noise-reduction] skip 分布: heartbeat=89, cron_prompt=67, tool_json=134, ...
+```
 
-**方式 B — 外部配置文件**
-规则存在 JSON/YAML 配置文件里，merge 脚本读取配置。适合规则需要频繁调整的环境。
-
-**方式 C — 混合模式**
-通用规则硬编码，环境特定规则用配置文件。兼顾稳定性和灵活性。
-
-选哪种看你的实际需求。如果规则不超过 20 条且很少改，方式 A 就够了。
+这段统计是后续迭代的数据基础——不需要你记得去复查，每次 merge 跑完都能看到。
 
 参考实现见 `references/example-classifier.md`。
 
@@ -136,8 +130,6 @@ tags: [memory, noise-reduction, clawise]
 规则写完后，**必须验证**。不验证的规则不可信。
 
 ### 量化指标
-
-对同一天的数据，分别跑降噪前和降噪后，计算三个指标：
 
 | 指标 | 定义 | 目标 |
 |------|------|------|
@@ -154,26 +146,25 @@ tags: [memory, noise-reduction, clawise]
 
 ### 判定
 
-- 压缩率在 30%-60% 范围内 → 正常
+- 压缩率在 30%-60% → 正常
 - 压缩率 < 20% → 规则可能太少，噪声没滤干净
 - 压缩率 > 80% → 规则可能太激进，检查有没有误杀
 - 误杀率 > 2% → 回第 3 步调整规则
 - 遗漏率 > 5% → 补充规则
 
-把验证结果记录下来，和噪声画像一起存档。
+把首次验证的结果（压缩率、误杀率、遗漏率）作为**基线**记录到噪声画像里。
 
 ---
 
-## 第 5 步：持续迭代
+## 第 5 步：基线偏移检测
 
-降噪规则不是写一次就完事。以下情况触发复查：
+第 3 步要求 merge 脚本每次执行都输出降噪统计。利用这个统计做偏移检测：
 
-- **新增聊天渠道**（从 Telegram 扩到 Discord）→ 重跑第 2 步
-- **接入新工具**（新的 API、新的插件）→ 工具输出 pattern 可能变化
-- **merge 后发现异常**（某个 skip reason 突然暴增或消失）→ 检查规则是否过时
-- **向量搜索质量下降**（搜不到应该能搜到的内容）→ 可能是噪声漏过了
+- **压缩率偏离基线超过 15 个百分点** → 重跑第 2 步诊断。可能是新增了渠道、接入了新工具、或某类噪声 pattern 变了
+- **出现未知的 skip reason** → 检查是否有新类型的噪声需要归类
+- **某个 reason 的 skip 数量突然归零** → 上游可能改了格式，原来的规则匹配不到了
 
-建议每 2-4 周抽查一次降噪效果，保持规则与环境同步。
+不需要定期复查。统计数据每次 merge 都在，异常发生时自然可见。
 
 ---
 
@@ -181,5 +172,5 @@ tags: [memory, noise-reduction, clawise]
 
 - **memory-deposit** 负责搭建记忆系统的基础设施（merge 脚本、目录结构、Git、向量索引）
 - **noise-reduction** 负责优化 merge 过程中的降噪质量
-- 本 skill 的产出（降噪规则）由 memory-deposit 的 merge 脚本消费
+- 本 skill 的产出（降噪规则）写在 memory-deposit 的 merge 脚本里
 - 如果你还没跑过 memory-deposit，先去跑——没有 merge 脚本，降噪无处落地
