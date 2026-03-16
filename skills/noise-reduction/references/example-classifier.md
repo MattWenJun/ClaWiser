@@ -73,7 +73,5 @@ if (text.length < 10 && 不含中文 && 不含关键 emoji) → skip('short_frag
 
 - 渠道：Telegram（单聊 + 群聊）
 - 平台：OpenClaw（有 heartbeat、cron、RULE INJECTION 机制）
-- 特有噪声：`⚠️ RULE INJECTION` 元数据包裹、`Conversation info (untrusted metadata)` JSON 块
-- 这些 pattern 在其他渠道（Discord、WhatsApp）不会出现，但会有各自的元数据格式
 
-你的环境如果用的是 Discord，噪声可能是 embed metadata、bot prefix、slash command echo 等。如果是 WhatsApp，可能是 delivery receipt、group notification 等。用第 2 步的采样分析找到你自己的 pattern。
+其他渠道的噪声 pattern 不同。用第 2 步的采样分析发现你自己的 pattern。
