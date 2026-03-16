@@ -1,7 +1,7 @@
 ---
 name: noise-reduction
 description: 对话数据降噪。诊断当前环境的噪声模式，编写降噪规则，验证降噪效果。适用于：(1) 首次搭建降噪流程 (2) 新增聊天渠道后更新规则 (3) 记忆召回质量下降的排查——如果向量搜索搜不到应该搜到的内容，可能是对话数据里噪声太多。当用户说"降噪"、"清洗对话"、"noise reduction"、"信噪比"、"记忆力不行"、"搜不到东西"、"找不到过去的内容"时触发。
-version: 0.4.0
+version: 0.5.0
 author: Matt (MindCode)
 tags: [memory, noise-reduction, clawise]
 ---
@@ -17,16 +17,48 @@ tags: [memory, noise-reduction, clawise]
 
 ## 执行模式
 
-**一次跑完**：在一个 session 里顺序执行 4 步。总耗时约 7-12 分钟。
+**默认分步执行。** 每步独立运行，步间通过文件传递状态。
 
-**分步执行**：每步可以独立运行，步间通过文件传递状态。适合有超时限制的环境。
 - Run 1: Step 1-2（读 references + 跑诊断脚本）→ 输出 `memory/noise-profile-<date>.md`（~2 分钟）
 - Run 2: Step 3（读噪声画像 + 写规则）→ 修改 merge 脚本（~4 分钟）
 - Run 3: Step 4（跑验证脚本 + 判断）→ 输出验证结果（~2 分钟）
 
 分步时不需要前序 session 的上下文——每步的输入和输出都是文件。
 
-**如果你在有超时限制的环境中运行（如子 agent 或 cron），且可用时间 < 10 分钟，使用分步执行模式。**
+### 断点恢复
+
+每步完成后写 `memory/noise-reduction-state.json`：
+
+```json
+{
+  "version": "0.5.0",
+  "startedAt": "2026-03-16T10:00:00Z",
+  "targetDate": "2026-03-15",
+  "completedSteps": [1, 2],
+  "noiseProfilePath": "memory/noise-profile-2026-03-15.md",
+  "mergeScriptBackup": true
+}
+```
+
+**开始执行前先检查这个文件。** 如果存在，从 `completedSteps` 的下一步继续，不要重头开始。
+
+全部完成（Step 4 通过）后删除 state 文件。Step 4 不通过时，把 `completedSteps` 回退到 `[1, 2]`，下次从 Step 3 重做。
+
+### 超时自动处理
+
+OpenClaw 默认每个 agent turn 限时 600 秒。如果单步执行超时被中断，state 文件保留了进度，下次触发时自动恢复。
+
+如果某一步确实需要更长时间（如 Step 3 的 merge 脚本较复杂），可以用 gateway 工具临时调大超时：
+
+```
+gateway(action=config.patch, path="agents.defaults.timeoutSeconds", raw="900")
+```
+
+跑完后调回来：
+
+```
+gateway(action=config.patch, path="agents.defaults.timeoutSeconds", raw="600")
+```
 
 ---
 
@@ -43,6 +75,8 @@ session 原始数据里的内容分两类：
 | | 内部独白（`Now let me…`、`Let me check…`） |
 
 详细的噪声类型和识别特征见 `references/noise-categories.md`。
+
+**完成后更新 state 文件**：`completedSteps: [1]`。
 
 ---
 
@@ -61,6 +95,8 @@ node scripts/diagnose-noise.js <YYYY-MM-DD> --out memory/noise-profile-<date>.md
 - 脚本标注了"⚠️ 需要注意"的项目——这些是需要特殊处理的环境特征
 - 脚本无法识别**上下文相关的噪声**（如 cron prompt 后面的 assistant 回复），会在报告中提示
 - 检查"消息样本"段落，确认分类是否合理
+
+**完成后更新 state 文件**：`completedSteps: [1, 2]`，`noiseProfilePath: "memory/noise-profile-<date>.md"`。
 
 ---
 
@@ -91,6 +127,8 @@ node scripts/diagnose-noise.js <YYYY-MM-DD> --out memory/noise-profile-<date>.md
 修改 merge 脚本前，先备份当前版本：`cp merge-daily-transcript.js merge-daily-transcript.js.bak`。如果中途被中断，下次可以从备份恢复。
 
 参考实现见 `references/example-classifier.md`。
+
+**完成后更新 state 文件**：`completedSteps: [1, 2, 3]`，`mergeScriptBackup: true`。
 
 ---
 
@@ -145,9 +183,11 @@ node scripts/validate-noise-reduction.js <YYYY-MM-DD>
 - \> 80%：几乎肯定有误杀，查 `common-failures.md` 的"压缩率 > 80%"段落
 - < 20%：规则覆盖不足，查 `common-failures.md` 的"压缩率 < 20%"段落
 
-**调整后仍未达标**：记录当前结果和未解决的问题，不必追求完美——后续 merge 的统计输出会持续可见。
+**调整后仍未达标**：记录当前结果和未解决的问题，不必追求完美——后续 merge 的统计输出会持续可见。Step 4 不通过需要重做 Step 3 时，更新 state 文件 `completedSteps: [1, 2]`。
 
 首次验证结果记录到噪声画像。
+
+**验证通过后删除 state 文件**（`memory/noise-reduction-state.json`），任务完成。
 
 验证通过后，在 AGENTS.md 中写入：
 
