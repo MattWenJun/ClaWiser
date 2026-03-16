@@ -81,7 +81,7 @@ Query → BM25 Keyword Search ────────┘
 搜索结果不理想
 ├── 数据根本不在索引里？
 │   ├── 是 → 检查 memory-deposit（归档流程没跑？extraPaths 没配？）
-│   └── 不确定 → ls memory/ + find data/transcripts/ 确认文件存在
+│   └── 不确定 → ls memory/ + find 相关目录确认文件存在
 │
 ├── 数据在索引里但质量差？
 │   ├── 噪声太多稀释向量空间 → 路由到 noise-reduction

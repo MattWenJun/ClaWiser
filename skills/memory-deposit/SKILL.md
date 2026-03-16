@@ -2,7 +2,7 @@
 name: memory-deposit
 description: 检查并补齐 6 层记忆系统。检查当前 workspace 的记忆配置是否完整，缺什么补什么。已完成则报告状态，未完成则引导配置。可反复执行。
 version: 0.3.0
-author: Matt (MindCode)
+author: MindCode
 tags: [memory, foundation, clawise]
 ---
 

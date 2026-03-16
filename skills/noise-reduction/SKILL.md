@@ -2,7 +2,7 @@
 name: noise-reduction
 description: 对话数据降噪。诊断当前环境的噪声模式，编写降噪规则，验证降噪效果。适用于：(1) 首次搭建降噪流程 (2) 新增聊天渠道后更新规则 (3) 记忆召回质量下降的排查——如果向量搜索搜不到应该搜到的内容，可能是对话数据里噪声太多。当用户说"降噪"、"清洗对话"、"noise reduction"、"信噪比"、"记忆力不行"、"搜不到东西"、"找不到过去的内容"时触发。
 version: 0.5.0
-author: Matt (MindCode)
+author: MindCode
 tags: [memory, noise-reduction, clawise]
 ---
 

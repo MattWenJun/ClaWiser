@@ -140,7 +140,7 @@ function parseTranscript() {
     : null;
 
   // Parse ### HH:MM entries — handle various emoji/name formats
-  // Formats: "### 00:32 👤 用户", "### 00:32 👤 Matt", "### 00:32 🤖 Agent", "### 00:32 🌙 Luna"
+  // Formats: "### 00:32 👤 用户", "### 00:32 👤 User", "### 00:32 🤖 Agent", "### 00:32 🤖 Agent"
   const entryRegex = /^### (\d{2}:\d{2}) (\S+) .+?\n([\s\S]*?)(?=\n### |\n*$)/gm;
   let match;
   // Emojis/names that indicate user vs assistant
