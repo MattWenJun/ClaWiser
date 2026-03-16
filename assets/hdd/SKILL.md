@@ -3,7 +3,7 @@ name: hdd
 description: Hypothesis-Driven Development (HDD) — 假设驱动开发方法论。当任务涉及诊断/debug、优化/选型、架构/配置变更、或结果不确定需要验证时激活。不适用于指令明确的简单编辑（改文案、加 import）。手动触发：用户说"用 HDD"、"按 TDD 方式"、"先验证假设"。
 version: 0.2.0
 author: MindCode
-tags: [methodology, debugging, clawise]
+tags: [methodology, debugging, clawiser]
 ---
 
 # HDD: Hypothesis-Driven Development

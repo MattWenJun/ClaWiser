@@ -3,7 +3,7 @@ name: memory-deposit
 description: 检查并补齐 6 层记忆系统。检查当前 workspace 的记忆配置是否完整，缺什么补什么。已完成则报告状态，未完成则引导配置。可反复执行。
 version: 0.3.0
 author: MindCode
-tags: [memory, foundation, clawise]
+tags: [memory, foundation, clawiser]
 ---
 
 # Memory Deposit — 记忆沉淀
@@ -139,7 +139,7 @@ cd ~/.openclaw/workspace && git init
 
 未通过的项标 ⚠️ 并说明原因。
 
-## 与其他 ClaWise 模块的关系
+## 与其他 ClaWiser 模块的关系
 
 - **noise-reduction** → 对话合并降噪的进阶策略
 - **retrieval-enhance** → 向量召回的高级用法（query expansion、reranking）

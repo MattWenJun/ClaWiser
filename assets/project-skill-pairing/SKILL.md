@@ -3,7 +3,7 @@ name: project-skill-pairing
 description: 项目与 Skill 的双向绑定。新建 Skill 时挂靠项目，新建项目时关联 Skill。触发词："建个项目"、"初始化项目"、"新建 skill"、"project init"、"查缺补漏"、"项目结构"。也在创建或修改 Skill 后自动检查项目归属。
 version: 0.1.0
 author: MindCode
-tags: [project-management, skill-management, clawise]
+tags: [project-management, skill-management, clawiser]
 ---
 
 # Project-Skill Pairing — 项目与 Skill 结对

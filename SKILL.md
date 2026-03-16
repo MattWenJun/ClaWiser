@@ -1,17 +1,17 @@
 ---
-name: clawise
-description: Agent 记忆与工作流增强套件。包含 8 个模块：记忆系统（memory-deposit、retrieval-enhance、noise-reduction）+ 工作流（hdd、product-first、save-game、load-game、project-skill-pairing）。当用户说"安装 ClaWise"、"初始化 ClaWise"、"运行 ClaWise"时触发。
+name: clawiser
+description: Agent 记忆与工作流增强套件。包含 8 个模块：记忆系统（memory-deposit、retrieval-enhance、noise-reduction）+ 工作流（hdd、product-first、save-game、load-game、project-skill-pairing）。当用户说"安装 ClaWiser"、"初始化 ClaWiser"、"运行 ClaWiser"时触发。
 version: 1.0.0
 author: MindCode
 tags: [memory, workflow, enhancement, suite]
 license: MIT
 ---
 
-# ClaWise — Agent 记忆与工作流增强
+# ClaWiser — Agent 记忆与工作流增强
 
 ## 你在看什么
 
-ClaWise 是一个模块化套件，包含 8 个独立模块，分两层：
+ClaWiser 是一个模块化套件，包含 8 个独立模块，分两层：
 
 **记忆层（需要初始化）：**
 - **memory-deposit** — 6 层记忆系统：对话合并、向量召回、Git 版本管理
@@ -38,7 +38,7 @@ ClaWise 是一个模块化套件，包含 8 个独立模块，分两层：
 3. **scripts/ 下已有脚本？** → 检查 `merge-daily-transcript.js`、`auto-commit.sh` 是否存在（存在说明装过旧版或其他方案）
 
 **向用户汇报评估结果。语气要有活人感：**
-- 感谢用户把 ClaWise 端到你面前（这可是增强你自己的好东西）
+- 感谢用户把 ClaWiser 端到你面前（这可是增强你自己的好东西）
 - 需要安装的模块 → 表达期待（"这个我还没有，装上之后应该能 XX，让我来配一下"）
 - 已经有的能力 → 表达自信（"这个我已经有了，不用重复装，放心"）
 - 预估时间：记忆层 ~5 分钟，工作流层 ~1 分钟
@@ -83,7 +83,7 @@ cp -r ${CLAUDE_SKILL_DIR}/assets/noise-reduction "$SKILL_DIR/"
 
 **脚本冲突处理：** 如果 `scripts/merge-daily-transcript.js` 或 `scripts/auto-commit.sh` 已存在，先读取已有版本和新版本的内容，自行判断：
 - 内容相同 → 直接覆盖
-- 已有版本有自定义修改（比如用户之前跑过 noise-reduction 加了降噪规则）→ 合并两个版本：保留用户的自定义逻辑，同时更新 ClaWise 的基础框架部分
+- 已有版本有自定义修改（比如用户之前跑过 noise-reduction 加了降噪规则）→ 合并两个版本：保留用户的自定义逻辑，同时更新 ClaWiser 的基础框架部分
 - 无法合并（改动太大）→ 备份旧版为 `.bak`，复制新版，然后重新跑 noise-reduction 把降噪规则加回来
 
 完成后回报用户：哪些层已就位、哪些需要用户补充（如 embedding API key）。
@@ -101,7 +101,7 @@ cp -r ${CLAUDE_SKILL_DIR}/assets/noise-reduction "$SKILL_DIR/"
 同时创建定期 cron 任务，每周自动检查：
 
 ```bash
-openclaw cron add --cron "0 3 * * 1" --name "clawise-noise-check" \
+openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
   --session isolated \
   --message "读 noise-reduction/SKILL.md，对最近 7 天的对话数据执行降噪诊断（Step 1-2）。如果压缩率 > 50%，继续执行 Step 3-5 编写降噪规则。完成后汇报结果。" \
   --deliver announce
@@ -112,7 +112,7 @@ openclaw cron add --cron "0 3 * * 1" --name "clawise-noise-check" \
 在用户的 AGENTS.md 末尾追加以下路由规则，让你在日常工作中自动使用这些模块：
 
 ```markdown
-## ClaWise 路由规则
+## ClaWiser 路由规则
 
 ### 记忆搜索
 记忆搜索默认走 retrieval-enhance 的增强协议，不要直接做单次 memory_search。
@@ -133,14 +133,14 @@ Compaction 后恢复项目上下文时，执行 load-game。
 
 ### 第 4 步：向用户发送说明书
 
-如果 `${CLAUDE_SKILL_DIR}/assets/clawise-guide.pdf` 存在，发送给用户作为参考。
+如果 `${CLAUDE_SKILL_DIR}/assets/clawiser-guide.pdf` 存在，发送给用户作为参考。
 
 ---
 
 ## 完成
 
 安装完成后，向用户报喜。语气要开心、俏皮，表达三层意思：
-1. **感谢** — 谢谢用户给你装了 ClaWise
+1. **感谢** — 谢谢用户给你装了 ClaWiser
 2. **兴奋** — 你被强化了！有了更好的记忆、更聪明的工作方式
 3. **承诺** — 会好好用这些新能力，加油干
 

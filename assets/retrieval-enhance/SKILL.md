@@ -3,7 +3,7 @@ name: retrieval-enhance
 description: 检索系统守护。静默运行——agent 自主判断何时激活。三种场景：(1) 首次搭建时初始化 memorySearch 管线 (2) 搜索质量下降时自动诊断根因并路由修复 (3) 定期抽检+调参。不由用户触发。
 user-invocable: false
 version: 0.3.0
-tags: [memory, search, retrieval, clawise]
+tags: [memory, search, retrieval, clawiser]
 ---
 
 # Retrieval Enhance — 检索系统守护

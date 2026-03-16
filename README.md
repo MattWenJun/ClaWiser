@@ -1,4 +1,4 @@
-# ClaWise
+# ClaWiser
 
 **Agent 记忆与工作流增强套件** — 让你的 AI agent 拥有持久记忆、结构化工作流和自我优化能力。
 
@@ -25,13 +25,13 @@
 
 ```bash
 # OpenClaw
-git clone https://github.com/MattWenJun/ClaWise.git ~/.openclaw/skills/clawise
+git clone https://github.com/MattWenJun/ClaWiser.git ~/.openclaw/skills/clawiser
 
 # Claude Code
-git clone https://github.com/MattWenJun/ClaWise.git .claude/skills/clawise
+git clone https://github.com/MattWenJun/ClaWiser.git .claude/skills/clawiser
 ```
 
-然后告诉你的 agent："运行 ClaWise 初始化。"
+然后告诉你的 agent："运行 ClaWiser 初始化。"
 
 ## 适用平台
 

@@ -3,7 +3,7 @@ name: load-game
 description: 项目读档（Load Game）。从 HANDOFF.md 恢复项目上下文，对比计划与实际，识别偏差并调整。触发场景：(1) Compaction 后恢复项目状态 (2) 接手别人/子 agent 的项目 (3) Cron 定时检查 (4) 跨天/跨周恢复工作。当用户说"读档"、"load game"、"恢复项目"、"review 进度"、"检查计划"时触发。
 version: 0.1.0
 author: MindCode
-tags: [project-management, handoff, clawise]
+tags: [project-management, handoff, clawiser]
 ---
 
 # Load Game — 项目状态恢复 + Review
