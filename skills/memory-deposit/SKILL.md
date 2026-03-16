@@ -129,3 +129,9 @@ cd ~/.openclaw/workspace && git init
 - **retrieval-enhance** → 向量召回的高级用法（query expansion、reranking）
 - **save-game / load-game** → 依赖 `memory/projects/`
 - **project-skill-pairing** → 依赖本 skill 的目录结构
+
+## 故障排查
+
+如果 6 层记忆都就位但召回质量仍然差：
+- transcript 里噪声太多 → 跑 `noise-reduction` 诊断降噪规则
+- 搜索命中不准 → 跑 `retrieval-enhance` 优化检索策略
