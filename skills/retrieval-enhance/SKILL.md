@@ -119,7 +119,7 @@ Query → BM25 Keyword Search ────────┘
 - Compaction 后回答之前的问题
 - 用户问"之前聊过/做过/决定过 xxx"
 - 跨概念/跨领域查询
-- 回答视频/播客内容的追问 → 命中后优先回读 `data/transcripts/` 原始转写
+- 需要准确引用时 → 搜索命中后回读 source path 指向的原始文件（搜索片段 ≠ 完整上下文）
 - 判断"有没有关于 X 的项目/文档/skill" → 先 recall 再 `find` 文件系统确认
 
 **流程：**
