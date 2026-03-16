@@ -35,7 +35,7 @@ ClaWise 是一个模块化套件，包含 8 个独立模块，分两层：
 
 1. **向量搜索已配好？** → `memory_search(query="test")` 试一下
 2. **memory/ 目录已有内容？** → `ls memory/`
-3. **已有 daily notes 习惯？** → 检查 `memory/YYYY-MM-DD.md` 是否存在
+3. **scripts/ 下已有脚本？** → 检查 `merge-daily-transcript.js`、`auto-commit.sh` 是否存在（存在说明装过旧版或其他方案）
 
 **向用户汇报评估结果。语气要有活人感：**
 - 感谢用户把 ClaWise 端到你面前（这可是增强你自己的好东西）
@@ -80,6 +80,11 @@ cp -r ${CLAUDE_SKILL_DIR}/assets/noise-reduction "$SKILL_DIR/"
 #### 2a. memory-deposit（基础，必须先做）
 
 派子 agent 执行：读 `memory-deposit/SKILL.md`，按其中的步骤完成 6 层记忆配置。
+
+**脚本冲突处理：** 如果 `scripts/merge-daily-transcript.js` 或 `scripts/auto-commit.sh` 已存在，先读取已有版本和新版本的内容，自行判断：
+- 内容相同 → 直接覆盖
+- 已有版本有自定义修改（比如用户之前跑过 noise-reduction 加了降噪规则）→ 合并两个版本：保留用户的自定义逻辑，同时更新 ClaWise 的基础框架部分
+- 无法合并（改动太大）→ 备份旧版为 `.bak`，复制新版，然后重新跑 noise-reduction 把降噪规则加回来
 
 完成后回报用户：哪些层已就位、哪些需要用户补充（如 embedding API key）。
 
