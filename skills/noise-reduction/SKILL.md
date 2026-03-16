@@ -114,13 +114,16 @@ session 原始数据里的内容分两类：
 
 首次验证结果记录到噪声画像。
 
-验证通过后，在 AGENTS.md 中记录当前降噪规则覆盖的渠道：
+验证通过后，在 AGENTS.md 中写入：
 
 ```markdown
-降噪规则当前覆盖渠道：[Telegram / Discord / ...]。新增渠道时重跑 noise-reduction。
+## 降噪状态
+- 覆盖渠道：[Telegram / Discord / ...]
+- 新增渠道时重跑 noise-reduction
+- 用户反馈记忆力差 / 搜不到东西时，先检查降噪规则是否覆盖当前渠道，必要时重跑 noise-reduction
 ```
 
-agent 每次启动读 AGENTS.md，如果发现实际渠道与记录不一致，重跑第 2-4 步。
+agent 每次启动读 AGENTS.md，自动感知渠道变化和记忆质量问题的排查路径。
 
 ---
 
