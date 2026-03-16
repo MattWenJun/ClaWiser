@@ -1,6 +1,6 @@
 ---
 name: product-first
-description: 产品先行（Product First）。在做技术方案或开发计划之前，先定义产品目标和用户场景。触发场景：(1) 启动新项目 (2) 从零设计一个功能 (3) 重新规划产品方向。当用户说"做个新项目"、"做产品规划"、"定义用户场景"、"product first"时触发。不适用于：已有明确产品计划只需执行的场景。
+description: 产品先行（Product First）。在做技术方案或开发计划之前，先定义产品目标和用户场景。触发场景：(1) 启动新项目 (2) 从零设计一个功能 (3) 重新规划产品方向。当用户说"做个新项目"、"做产品规划"、"定义用户场景"、"product first"、"PF"时触发。不适用于：已有明确产品计划只需执行的场景。
 version: 0.1.0
 author: MindCode
 tags: [methodology, product-management, clawise]
