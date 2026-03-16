@@ -204,7 +204,21 @@ function classifyMessage(role, text) {
       return { action: 'keep', cleanedText: userText, cls };
     }
 
-    if (t.startsWith('System: [')) return { action: 'skip', reason: 'system_exec' };
+    if (t.startsWith('System: [')) {
+      // System messages may wrap real user text after the system line
+      // e.g. "System: [2026-03-15 00:31:57 GMT+8] Model switched to ...\n\nConversation info..."
+      const lines = t.split('\n');
+      const nonSystemLines = lines.filter(l => !l.startsWith('System: [')).join('\n').trim();
+      if (nonSystemLines) {
+        // There's content after the System line — try to extract user text
+        const userText = extractUserText(nonSystemLines);
+        if (userText && userText.trim().length > 0) {
+          const cls = userText.includes('> [回复:') ? '回复' : (userText.includes('🎤') ? '语音' : '对话');
+          return { action: 'keep', cleanedText: userText, cls };
+        }
+      }
+      return { action: 'skip', reason: 'system_exec' };
+    }
     const cls = t.includes('🎤') ? '语音' : '对话';
     return { action: 'keep', cleanedText: t, cls };
   }
@@ -355,8 +369,30 @@ if (fs.existsSync(voiceFile)) {
 // 3. Sort by timestamp
 allMessages.sort((a, b) => a.ts - b.ts);
 
-// 4. Deduplicate: remove <media:audio> entries (voice version has actual text)
-const deduped = allMessages.filter(m => !(m.source === 'transcript' && m.text.includes('<media:audio>')));
+// 4. Deduplicate: handle <media:audio> entries
+// Don't blindly delete — extract whisper transcript lines if present
+const deduped = allMessages.filter(m => {
+  if (m.source !== 'transcript') return true;
+  if (!m.text.includes('<media:audio>')) return true;
+
+  // Check for whisper transcript lines: [00:00.000 --> 00:05.000] text
+  const transcriptLines = m.text.match(/\[\d{2}:\d{2}\.\d{3}\s*-->\s*\d{2}:\d{2}\.\d{3}\]\s*.+/g);
+  if (transcriptLines && transcriptLines.length > 0) {
+    // Extract the spoken text from transcript lines
+    const spokenText = transcriptLines
+      .map(l => l.replace(/\[\d{2}:\d{2}\.\d{3}\s*-->\s*\d{2}:\d{2}\.\d{3}\]\s*/, '').trim())
+      .filter(Boolean)
+      .join(' ');
+    if (spokenText) {
+      m.text = `🎤 [语音] ${spokenText}`;
+      return true; // keep with extracted text
+    }
+  }
+
+  // No transcript content found — check if voice JSONL version exists
+  // (voice JSONL has the actual text; this bare <media:audio> is just a placeholder)
+  return false;
+});
 
 // 5. Classify & clean
 const cleaned = [];

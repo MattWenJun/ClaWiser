@@ -1,7 +1,7 @@
 ---
 name: noise-reduction
 description: 对话数据降噪。诊断当前环境的噪声模式，编写降噪规则，验证降噪效果。适用于：(1) 首次搭建降噪流程 (2) 新增聊天渠道后更新规则 (3) 记忆召回质量下降的排查——如果向量搜索搜不到应该搜到的内容，可能是对话数据里噪声太多。当用户说"降噪"、"清洗对话"、"noise reduction"、"信噪比"、"记忆力不行"、"搜不到东西"、"找不到过去的内容"时触发。
-version: 0.3.0
+version: 0.4.0
 author: Matt (MindCode)
 tags: [memory, noise-reduction, clawise]
 ---
@@ -17,7 +17,7 @@ tags: [memory, noise-reduction, clawise]
 
 ## 执行模式
 
-**一次跑完**：在一个 session 里顺序执行 4 步。总耗时约 7-10 分钟。
+**一次跑完**：在一个 session 里顺序执行 4 步。总耗时约 7-12 分钟。
 
 **分步执行**：每步可以独立运行，步间通过文件传递状态。适合有超时限制的环境。
 - Run 1: Step 1-2（读 references + 跑诊断脚本）→ 输出 `memory/noise-profile-<date>.md`（~2 分钟）
@@ -25,6 +25,8 @@ tags: [memory, noise-reduction, clawise]
 - Run 3: Step 4（跑验证脚本 + 判断）→ 输出验证结果（~2 分钟）
 
 分步时不需要前序 session 的上下文——每步的输入和输出都是文件。
+
+**如果你在有超时限制的环境中运行（如子 agent 或 cron），且可用时间 < 10 分钟，使用分步执行模式。**
 
 ---
 
@@ -86,6 +88,8 @@ node scripts/diagnose-noise.js <YYYY-MM-DD> --out memory/noise-profile-<date>.md
 [noise-reduction] skip 分布: heartbeat=89, cron_prompt=67, tool_json=134, ...
 ```
 
+修改 merge 脚本前，先备份当前版本：`cp merge-daily-transcript.js merge-daily-transcript.js.bak`。如果中途被中断，下次可以从备份恢复。
+
 参考实现见 `references/example-classifier.md`。
 
 ---
@@ -106,7 +110,7 @@ node scripts/validate-noise-reduction.js <YYYY-MM-DD>
 
 | 指标 | 定义 | 目标 |
 |------|------|------|
-| **压缩率** | user+assistant 消息中，降噪后保留条数 ÷ user+assistant 总条数 | 30%-60% |
+| **压缩率** | user+assistant 消息中，被过滤条数 ÷ user+assistant 总条数 | 30%-60%（典型），60%-80%（高噪声环境可能正常） |
 | **误杀率** | 被过滤消息中实际是对话的占比 | < 2% |
 | **遗漏率** | 保留消息中实际是噪声的占比 | < 5% |
 
@@ -135,9 +139,11 @@ node scripts/validate-noise-reduction.js <YYYY-MM-DD>
 
 遗漏率超标不能用"保守原则"跳过——保守是指不确定的消息默认保留，不是指明确的噪声可以放过。
 
-**压缩率异常**：
-- < 20%：规则太少，查 `common-failures.md` 的"压缩率 < 20%"段落
-- \> 80%：规则太激进，查 `common-failures.md` 的"压缩率 > 80%"段落
+**压缩率判定**：
+- 30%-60%：典型健康范围，直接看误杀率和遗漏率
+- 60%-80%：高噪声环境可能出现（cron 任务多、heartbeat 频繁）。**检查误杀率——如果 < 2%，说明噪声确实多，压缩率合理，通过。** 不要试图把压缩率降到 60% 以下
+- \> 80%：几乎肯定有误杀，查 `common-failures.md` 的"压缩率 > 80%"段落
+- < 20%：规则覆盖不足，查 `common-failures.md` 的"压缩率 < 20%"段落
 
 **调整后仍未达标**：记录当前结果和未解决的问题，不必追求完美——后续 merge 的统计输出会持续可见。
 
