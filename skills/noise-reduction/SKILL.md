@@ -106,7 +106,7 @@ node scripts/diagnose-noise.js <YYYY-MM-DD> --out memory/noise-profile-<date>.md
 
 ### 规则设计原则
 
-1. **按 role 分流**：user 和 assistant 的噪声模式不同，分开处理
+1. **按 role 分流**：user 和 assistant 的噪声模式不同，分开处理。⚠️ 分类器中的用户/agent 标识要匹配实际名字（从 USER.md 和 IDENTITY.md 读取），不要硬编码通用称谓
 2. **先处理量大的**：从噪声画像占比最高的类别开始
 3. **保守过滤**：不确定的消息默认保留。误保留的代价远小于误杀
 4. **标注 reason**：每条规则标注过滤原因（如 `skip('heartbeat')`）

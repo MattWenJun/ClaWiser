@@ -55,6 +55,22 @@ mkdir -p memory/transcripts memory/projects memory/voice scripts
 
 `role` 用 `"user"` 或 `"assistant"`，不要用实际名字。merge 脚本依赖这个字段区分发话人。
 
+### A4. ⚠️ 合并输出的名字
+
+merge 脚本生成的 transcript 里，发话人标识默认是 `👤 用户` 和 `🤖 Agent`。**执行合并时，读取 USER.md 和 IDENTITY.md，用真实名字替换通用称谓。** 例如：用户叫 Jack、agent 叫 Alice → 输出 `👤 Jack` 和 `🤖 Alice`。
+
+### A5. ⚠️ 索引范围
+
+确保所有重要目录纳入向量索引。OpenClaw 的 `memorySearch.extraPaths` 支持多个目录：
+
+```json5
+memorySearch: {
+  extraPaths: ["data/transcripts", "AGENTS.md", "TOOLS.md"]
+}
+```
+
+**不要只索引 memory/**——如果有其他包含重要内容的目录（项目文档、转写存档、参考资料），都应加入 `extraPaths`。用 `gateway(action=config.patch)` 修改。
+
 ---
 
 ## 步骤 B：配置

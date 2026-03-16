@@ -87,6 +87,7 @@ tags: [project-management, handoff, clawise]
 | 字段 | 为什么 |
 |------|--------|
 | 项目目标 | 新 agent 要先理解"为什么" |
+| ⚠️ 用真实名字 | HANDOFF 里用 USER.md/IDENTITY.md 的真实名字，不用通用的"用户"/"agent" |
 | 当前进展 | 不查 git log 就知道做到哪了 |
 | 下一步 | 不猜就知道接下来做什么 |
 | 关键数字/ID | compaction 后会丢（cron ID、端口号、群 ID） |
