@@ -119,7 +119,8 @@ Query → BM25 Keyword Search ────────┘
 - Compaction 后回答之前的问题
 - 用户问"之前聊过/做过/决定过 xxx"
 - 跨概念/跨领域查询
-- 判断"有没有关于 X 的项目/文档/skill"
+- 回答视频/播客内容的追问 → 命中后优先回读 `data/transcripts/` 原始转写
+- 判断"有没有关于 X 的项目/文档/skill" → 先 recall 再 `find` 文件系统确认
 
 **流程：**
 
@@ -139,6 +140,8 @@ Query → BM25 Keyword Search ────────┘
 合并 → 按 path+lineRange 去重 → 基于原始意图重排 → 取 top 5-10。未找到则换角度重搜（最多 2 轮）。
 
 **豁免：** 简单事实查询、内容还在上下文中、单次搜索 score > 0.75 精确命中。
+
+**性能预算：** 整个流程 < 5 秒（expansion 0s + parallel search ~3s + rerank 0s）。
 
 ### 外部搜索 Query Expansion
 
