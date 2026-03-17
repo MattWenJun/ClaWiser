@@ -1,6 +1,6 @@
 ---
 name: clawiser
-description: Agent 记忆与工作流增强套件。包含 8 个模块：记忆系统（memory-deposit、retrieval-enhance、noise-reduction）+ 工作流（hdd、product-first、save-game、load-game、project-skill-pairing）。当用户说"安装 ClaWiser"、"初始化 ClaWiser"、"运行 ClaWiser"时触发。
+description: Agent 记忆与工作流增强套件。包含 8 个模块：记忆系统（memory-deposit、retrieval-enhance、noise-reduction）+ 工作流（hdd、sdd、save-game、load-game、project-skill-pairing）。当用户说"安装 ClaWiser"、"初始化 ClaWiser"、"运行 ClaWiser"时触发。
 version: 1.0.0
 author: MindCode
 tags: [memory, workflow, enhancement, suite]
@@ -20,7 +20,7 @@ ClaWiser 是一个模块化套件，包含 8 个独立模块，分两层：
 
 **工作流层（安装即用）：**
 - **hdd** — 假设驱动开发（HDD）：不确定的任务先验证假设再动手
-- **product-first** — 产品先行（PF）：做技术方案前先定义产品目标
+- **sdd** — 场景驱动开发（SDD）：动手前先想清楚场景、局面和判断依据
 - **save-game** — 项目存档：工作段结束时写 HANDOFF.md 保存上下文
 - **load-game** — 项目读档：从 HANDOFF.md 恢复项目状态
 - **project-skill-pairing** — 项目与 skill 配对：每个 skill 有项目归属
@@ -65,7 +65,7 @@ SKILL_DIR="skills"
 mkdir -p "$SKILL_DIR"
 
 cp -r ${CLAUDE_SKILL_DIR}/assets/hdd "$SKILL_DIR/"
-cp -r ${CLAUDE_SKILL_DIR}/assets/product-first "$SKILL_DIR/"
+cp -r ${CLAUDE_SKILL_DIR}/assets/sdd "$SKILL_DIR/"
 cp -r ${CLAUDE_SKILL_DIR}/assets/save-game "$SKILL_DIR/"
 cp -r ${CLAUDE_SKILL_DIR}/assets/load-game "$SKILL_DIR/"
 cp -r ${CLAUDE_SKILL_DIR}/assets/project-skill-pairing "$SKILL_DIR/"
@@ -126,8 +126,8 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 ### 复杂任务默认走 HDD
 涉及诊断/debug、优化/选型、架构/配置变更、或结果不确定的任务时，先读 hdd/SKILL.md，按假设驱动流程执行。简单明确的编辑不需要走 HDD。
 
-### 新项目先 PF
-启动新项目或从零设计功能时，先读 product-first/SKILL.md，定义产品目标和用户场景后再做技术方案。
+### 新项目先 SDD
+启动新项目或从零设计功能时，先读 sdd/SKILL.md，想清楚场景和判断依据后再动手。
 
 ### 项目存档/读档
 工作段结束、compaction 即将发生、或移交子 agent 时，执行 save-game。
@@ -152,7 +152,7 @@ Compaction 后恢复项目上下文时，执行 load-game。
 
 同时列出安装结果的具体信息：
 
-- **立即可用：** hdd（`/hdd`）、product-first（`/pf`）、save-game、load-game、project-skill-pairing
+- **立即可用：** hdd、sdd、save-game、load-game、project-skill-pairing
 - **已初始化：** memory-deposit、retrieval-enhance
 - **定期自动运行：** noise-reduction（每周一凌晨 3 点）
 - **路由规则已写入 AGENTS.md**
