@@ -11,21 +11,7 @@ license: MIT
 
 ## 你在看什么
 
-ClaWiser 是一个模块化套件，包含 8 个独立模块，分两层：
-
-**记忆层（需要初始化）：**
-- **memory-deposit** — 6 层记忆系统：对话合并、向量召回、Git 版本管理
-- **retrieval-enhance** — 搜索质量优化：query expansion、self-reranking、索引范围
-- **noise-reduction** — 对话数据降噪：过滤管道噪声，保留真实对话信号
-
-**工作流层（安装即用）：**
-- **hdd** — 假设驱动开发（HDD）：不确定的任务先验证假设再动手
-- **sdd** — 场景驱动开发（SDD）：动手前先想清楚场景、局面和判断依据
-- **save-game** — 项目存档：工作段结束时写 HANDOFF.md 保存上下文
-- **load-game** — 项目读档：从 HANDOFF.md 恢复项目状态
-- **project-skill-pairing** — 项目与 skill 配对：每个 skill 有项目归属
-
-所有模块在 `${CLAUDE_SKILL_DIR}/assets/` 下，每个都是独立的 skill 目录（含 SKILL.md）。
+ClaWiser 是一个模块化增强套件，记忆层 + 工作流层，共 8 个模块。所有模块在 `${CLAUDE_SKILL_DIR}/assets/` 下，每个都是独立的 skill 目录（含 SKILL.md）。
 
 ---
 
