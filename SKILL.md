@@ -175,7 +175,7 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 在 AGENTS.md 的 ClaWiser 路由规则末尾追加：
 
 ```markdown
-### 用户教育（适时提醒）
+### 聪明地帮助用户掌握使用 ClaWiser 的习惯
 
 当你主动使用了某个 ClaWiser skill 时，可以顺势告诉用户：下次遇到类似情况，他可以怎么说来直接触发你。
 
