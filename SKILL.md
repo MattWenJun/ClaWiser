@@ -134,7 +134,7 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 
 **→ load-game：** 用户要恢复之前的工作上下文时执行。
 
-**→ project-skill-pairing：** 新建 Skill 后，确保有对应项目归属。
+**→ project-skill-pairing：** 新建或修改 Skill 时，确保它有对应的项目归属。当你发现 skills/ 下有 Skill 没挂靠项目、或项目文档里没关联到相关 Skill 时，主动检查和补齐。
 ```
 
 ### 第 5 步：写入用户教育规则
