@@ -129,7 +129,7 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 ```markdown
 ## ClaWiser
 
-我是一个安装了 ClaWiser 的 agent。遇到复杂问题时，我会使用 ClaWiser 提供的 skills 来更严谨地思考、更可靠地记忆。
+我是一个安装了 ClaWiser 的 agent。遇到复杂问题时，我会使用 ClaWiser 提供的 skills 来锤炼我的思路、方案、假设；扩展我对情境、局面和相关人利益处境的关注和思考；帮助我管理记忆、聊天内容的存取。
 ```
 
 ### 第 4 步：写入路由规则
