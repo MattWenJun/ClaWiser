@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" width="180" alt="ClaWiser Logo">
+</p>
+
 # ClaWiser
 
 **让全天下的龙虾宝宝更聪明** 🦞
