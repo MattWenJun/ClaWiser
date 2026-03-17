@@ -26,20 +26,9 @@ Query → Embedding → Vector Search ──┐
 Query → BM25 Keyword Search ────────┘
 ```
 
-### OpenClaw 出厂状态 vs ClaWiser 推荐
-
-OpenClaw 出厂已经开了 hybrid search（向量 + BM25 混合搜索），但**有两个关键功能默认是关闭的**，需要你帮用户打开：
-
-| 功能 | 出厂默认 | ClaWiser 推荐 | 为什么要开 |
-|------|---------|-------------|-----------|
-| hybrid search | ✅ 已开 | 保持 | — |
-| vectorWeight / textWeight | ✅ 0.7 / 0.3 | 保持或微调 | — |
-| **MMR 去重** | ❌ **关闭** | **打开** | 不开的话搜出来一堆相似结果，浪费搜索名额 |
-| **temporal decay** | ❌ **关闭** | **打开** | 不开的话半年前的旧笔记可能压过昨天的更新 |
-| extraPaths | 空 | 按需配 | 默认只索引 memory/，其他重要目录要手动加 |
-| cache | 关闭 | 打开 | 避免重复嵌入同一内容 |
-
 ### Init 执行步骤
+
+OpenClaw 出厂已开 hybrid search，但 MMR 去重、temporal decay、cache 默认关闭。Init 的核心任务就是把它们打开。
 
 **Step 1：确认 embedding provider**
 
