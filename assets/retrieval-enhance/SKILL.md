@@ -26,7 +26,30 @@ Query → Embedding → Vector Search ──┐
 Query → BM25 Keyword Search ────────┘
 ```
 
-### 推荐初始配置
+### OpenClaw 出厂状态 vs ClaWiser 推荐
+
+OpenClaw 出厂已经开了 hybrid search（向量 + BM25 混合搜索），但**有两个关键功能默认是关闭的**，需要你帮用户打开：
+
+| 功能 | 出厂默认 | ClaWiser 推荐 | 为什么要开 |
+|------|---------|-------------|-----------|
+| hybrid search | ✅ 已开 | 保持 | — |
+| vectorWeight / textWeight | ✅ 0.7 / 0.3 | 保持或微调 | — |
+| **MMR 去重** | ❌ **关闭** | **打开** | 不开的话搜出来一堆相似结果，浪费搜索名额 |
+| **temporal decay** | ❌ **关闭** | **打开** | 不开的话半年前的旧笔记可能压过昨天的更新 |
+| extraPaths | 空 | 按需配 | 默认只索引 memory/，其他重要目录要手动加 |
+| cache | 关闭 | 打开 | 避免重复嵌入同一内容 |
+
+### Init 执行步骤
+
+**Step 1：确认 embedding provider**
+
+OpenClaw 会自动检测可用的 API key（Gemini → OpenAI → Voyage → Mistral），有 key 就自动启用向量搜索。
+
+检查：`memory_search(query="test")`
+- 有结果 → embedding 已就绪，跳到 Step 2
+- 报错 / 无结果 → 问用户有没有 Gemini 或 OpenAI 的 API key，配上即可
+
+**Step 2：打开出厂没开的功能**
 
 用 `gateway(action=config.patch)` 写入：
 
@@ -35,16 +58,8 @@ Query → BM25 Keyword Search ────────┘
   "agents": {
     "defaults": {
       "memorySearch": {
-        "provider": "gemini",              // gemini / openai / local / ollama
-        "model": "gemini-embedding-001",
-        "remote": { "apiKey": "YOUR_KEY" },
-        "fallback": "local",
-        "extraPaths": ["data/transcripts", "AGENTS.md", "TOOLS.md"],
         "query": {
           "hybrid": {
-            "vectorWeight": 0.85,
-            "textWeight": 0.15,
-            "candidateMultiplier": 6,
             "mmr": { "enabled": true, "lambda": 0.7 },
             "temporalDecay": { "enabled": true, "halfLifeDays": 30 }
           }
@@ -56,16 +71,31 @@ Query → BM25 Keyword Search ────────┘
 }
 ```
 
+**Step 3：配置 extraPaths（按需）**
+
+如果 workspace 里有其他包含重要内容的目录（转写存档、项目文档、参考资料），加入索引：
+
+```json5
+{
+  "agents": {
+    "defaults": {
+      "memorySearch": {
+        "extraPaths": ["data/transcripts", "AGENTS.md", "TOOLS.md"]
+      }
+    }
+  }
+}
+```
+
 ### 各参数说明
 
 | 参数 | 作用 | 何时调整 |
 |------|------|---------|
-| `hybrid.enabled` | 向量+BM25 混合搜索 | 默认开 |
-| `vectorWeight` / `textWeight` | 语义 vs 精确匹配权重 | 搜 ID/代码搜不到 → 提高 textWeight |
-| `mmr.enabled` + `lambda` | 去重，防搜出一堆相似结果 | 日志量大时必须开 |
+| `mmr.enabled` + `lambda` | 去重，防搜出一堆相似结果 | 日志量大时必须开（ClaWiser 默认帮你开） |
 | `temporalDecay.halfLifeDays` | 最近的优先，30 天后分数减半 | 需要搜 3 月前 → 设 90 天 |
+| `vectorWeight` / `textWeight` | 语义 vs 精确匹配权重 | 搜 ID/代码搜不到 → 提高 textWeight |
 | `extraPaths` | 扩展索引范围 | 有 transcript、额外文档目录时加 |
-| `cache` | 避免重复嵌入同一内容 | 默认开 |
+| `cache` | 避免重复嵌入同一内容 | ClaWiser 默认帮你开 |
 
 ---
 
