@@ -122,14 +122,14 @@ cd ~/.openclaw/workspace && git init
 
 > 向量搜索需要一个 embedding API key，这是记忆系统的核心能力——没有它，我就无法从历史记忆中检索信息。
 
-然后根据用户的网络环境推荐方案：
-
-**国内用户（无需翻墙）推荐方案：**
+然后询问用户有哪些 embedding API key 可用，并推荐方案：
 
 | 方案 | 模型 | 价格 | 说明 |
 |------|------|------|------|
-| **硅基流动 SiliconFlow**（推荐） | `BAAI/bge-large-zh-v1.5` 或 `BAAI/bge-m3` | 免费（注册送额度） | 中文效果最好，OpenAI 兼容接口 |
-| **OpenClaw 内置 local** | 自动下载的本地模型 | 免费，纯本地 | 零配置，但效果不如专用中文模型 |
+| **Gemini** | `gemini-embedding-001` | 免费额度大 | 配置最简单 |
+| **硅基流动 SiliconFlow** | `BAAI/bge-large-zh-v1.5` 或 `BAAI/bge-m3` | 免费（注册送额度） | 中文效果好，OpenAI 兼容接口 |
+| **OpenAI** | `text-embedding-3-small` | 付费 | 效果稳定 |
+| **Voyage / Mistral** | 各自默认模型 | 付费 | 都可以 |
 
 硅基流动配置方式（provider 设为 openai，用自定义 baseUrl）：
 ```json5
@@ -143,16 +143,6 @@ memorySearch: {
 }
 ```
 注册地址：https://siliconflow.cn — 注册后在控制台获取 API Key。
-
-**海外用户推荐方案：**
-
-| 方案 | 说明 |
-|------|------|
-| **Gemini** | 免费额度大，配置最简单 |
-| **OpenAI** | 效果稳定，需付费 |
-| **Voyage / Mistral** | 都可以，看你手上有哪个 key |
-
-**兜底方案：** 如果用户暂时没有任何 API key，可以先用 `provider: "local"`（OpenClaw 内置，自动下载模型，零配置），后续再升级到更好的 embedding 服务。
 
 确认用户选定方案后，用 `gateway(action=config.patch)` 帮用户配好，再跑一次 `memory_search` 验证。
 
