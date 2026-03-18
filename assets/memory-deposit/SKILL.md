@@ -128,9 +128,8 @@ cd ~/.openclaw/workspace && git init
 
 | 方案 | 模型 | 价格 | 说明 |
 |------|------|------|------|
-| **硅基流动 SiliconFlow**（推荐） | `BAAI/bge-large-zh-v1.5` 或 `BAAI/bge-m3` | 免费（注册送额度） | 中文效果好，OpenAI 兼容接口 |
-| **Ollama 本地** | `bge-m3`、`nomic-embed-text` | 免费，纯本地 | 不需要网络，但需要本地安装 Ollama |
-| **OpenClaw 内置 local** | 内置模型 | 免费，纯本地 | 最简单，但效果可能不如专用模型 |
+| **硅基流动 SiliconFlow**（推荐） | `BAAI/bge-large-zh-v1.5` 或 `BAAI/bge-m3` | 免费（注册送额度） | 中文效果最好，OpenAI 兼容接口 |
+| **OpenClaw 内置 local** | 自动下载的本地模型 | 免费，纯本地 | 零配置，但效果不如专用中文模型 |
 
 硅基流动配置方式（provider 设为 openai，用自定义 baseUrl）：
 ```json5
@@ -152,6 +151,8 @@ memorySearch: {
 | **Gemini** | 免费额度大，配置最简单 |
 | **OpenAI** | 效果稳定，需付费 |
 | **Voyage / Mistral** | 都可以，看你手上有哪个 key |
+
+**兜底方案：** 如果用户暂时没有任何 API key，可以先用 `provider: "local"`（OpenClaw 内置，自动下载模型，零配置），后续再升级到更好的 embedding 服务。
 
 确认用户选定方案后，用 `gateway(action=config.patch)` 帮用户配好，再跑一次 `memory_search` 验证。
 
