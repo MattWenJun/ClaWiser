@@ -1,6 +1,10 @@
 ---
 name: save-game
-description: 项目存档（Save Game）。审视→反思→调整→写交接，不只是抄状态。在工作段结束、compaction 即将发生、移交子 agent、或设定未来检查点时执行。当用户说"存档"、"写交接"、"save game"、"记一下进度"时触发。
+description: >
+  项目存档（Save Game）。审视→反思→调整→写交接，不只是抄状态。
+  适用于：工作段结束需要保存进展、compaction 即将发生、移交给其他 agent、需要设定未来检查点、或任何"下次回来时需要知道现在做到哪了"的场景。
+  当用户表达类似意图时触发——不限于特定措辞。常见表达举例："存档"、"save game"、"写交接"、"记一下进度"、"今天先到这"、"我要去忙了"、"先放一放"、"把进展存下来"、"下次继续"、"记录一下当前状态"、"别忘了我们聊到哪了"。
+  Agent 也应在以下情况主动建议存档：上下文即将溢出、长时间项目讨论即将中断、用户明显要离开。
 version: 0.1.0
 author: MindCode
 tags: [project-management, handoff, clawiser]
