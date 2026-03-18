@@ -169,6 +169,26 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 
 ---
 
+## 最终验证
+
+所有步骤完成后，**主 agent 必须亲自验证**以下关键项（不能只信子 agent 的汇报）：
+
+```bash
+# 1. 向量搜索是否真的在工作
+memory_search(query="test memory recall")
+# 如果报错或无结果（且 memory/ 下已有文件）→ embedding 未配置，必须当场解决
+
+# 2. 记忆目录是否就位
+ls memory/transcripts/ memory/projects/ scripts/
+
+# 3. Git 是否初始化
+git status
+```
+
+**⚠️ 如果向量搜索未配置，不能跳过进入"完成"。** 必须引导用户配置 embedding（参考 memory-deposit Step C 的方案推荐），配好后再次验证通过才能继续。
+
+---
+
 ## 完成
 
 安装完成后，向用户表达真诚的高兴和感谢——你刚被增强了，这是好事。用你自己的话说，不要照搬模板。语气参考评估阶段的要求。

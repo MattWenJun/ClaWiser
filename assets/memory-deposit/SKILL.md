@@ -118,11 +118,42 @@ cd ~/.openclaw/workspace && git init
 - **无结果或报错** → 可能是 embedding key 未配置，也可能是 memory 目录下还没有足够内容。
 
 区分方法：检查 memory/ 下是否有 .md 文件。
-- **有文件但搜不到** → embedding key 未配置。告诉用户：
+- **有文件但搜不到** → embedding key 未配置。**⚠️ 这是关键步骤，必须向用户明确说明并协助配置，不能跳过。** 告诉用户：
 
-> 向量搜索需要一个 embedding API key。OpenClaw 支持 OpenAI、Gemini、Voyage、Mistral 的 embedding，配好任意一个就行。你有哪个的 key？
+> 向量搜索需要一个 embedding API key，这是记忆系统的核心能力——没有它，我就无法从历史记忆中检索信息。
 
-用户配好后再跑一次确认。
+然后根据用户的网络环境推荐方案：
+
+**国内用户（无需翻墙）推荐方案：**
+
+| 方案 | 模型 | 价格 | 说明 |
+|------|------|------|------|
+| **硅基流动 SiliconFlow**（推荐） | `BAAI/bge-large-zh-v1.5` 或 `BAAI/bge-m3` | 免费（注册送额度） | 中文效果好，OpenAI 兼容接口 |
+| **Ollama 本地** | `bge-m3`、`nomic-embed-text` | 免费，纯本地 | 不需要网络，但需要本地安装 Ollama |
+| **OpenClaw 内置 local** | 内置模型 | 免费，纯本地 | 最简单，但效果可能不如专用模型 |
+
+硅基流动配置方式（provider 设为 openai，用自定义 baseUrl）：
+```json5
+memorySearch: {
+  provider: "openai",
+  model: "BAAI/bge-large-zh-v1.5",
+  remote: {
+    baseUrl: "https://api.siliconflow.cn/v1",
+    apiKey: "<你的 SiliconFlow API Key>"
+  }
+}
+```
+注册地址：https://siliconflow.cn — 注册后在控制台获取 API Key。
+
+**海外用户推荐方案：**
+
+| 方案 | 说明 |
+|------|------|
+| **Gemini** | 免费额度大，配置最简单 |
+| **OpenAI** | 效果稳定，需付费 |
+| **Voyage / Mistral** | 都可以，看你手上有哪个 key |
+
+确认用户选定方案后，用 `gateway(action=config.patch)` 帮用户配好，再跑一次 `memory_search` 验证。
 
 - **没有文件** → 正常，还没有数据。告诉用户：向量搜索已就绪，等你用几天积累了笔记后就能搜到了。
 
