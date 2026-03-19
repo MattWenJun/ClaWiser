@@ -138,6 +138,23 @@ function buildSessionGroupMap() {
 }
 
 // ============================================================
+// Session Type Mapping (for cron/subagent filtering)
+// ============================================================
+
+function buildSessionTypeMap() {
+  const typeMap = {};
+  try {
+    const data = JSON.parse(fs.readFileSync(SESSIONS_JSON, 'utf8'));
+    for (const [sid, meta] of Object.entries(data)) {
+      if (meta.sessionId) {
+        typeMap[meta.sessionId] = meta.kind || meta.type || 'unknown';
+      }
+    }
+  } catch (e) { /* sessions.json may not exist */ }
+  return typeMap;
+}
+
+// ============================================================
 // Message Cleaning
 // ============================================================
 
@@ -275,12 +292,15 @@ if (!fs.existsSync(SESSIONS_DIR)) {
 // 1. Collect messages from session transcripts
 const allMessages = [];
 const sessionGroupMap = buildSessionGroupMap();
+const sessionTypeMap = buildSessionTypeMap();
 let filesScanned = 0;
 let filesSkipped = 0;
+let skippedCron = 0;
+let skippedSubagent = 0;
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB — 超过的跳过并警告
 
-const sessionFiles = fs.readdirSync(SESSIONS_DIR).filter(f => f.endsWith('.jsonl'));
+const sessionFiles = fs.readdirSync(SESSIONS_DIR).filter(f => /\.jsonl(\.deleted\.\d+|\.reset\.\d+)?$/.test(f));
 for (const file of sessionFiles) {
   const filePath = path.join(SESSIONS_DIR, file);
   const stat = fs.statSync(filePath);
@@ -298,7 +318,13 @@ for (const file of sessionFiles) {
   if (stat.mtime < dayBefore || stat.birthtime > dayAfter) continue;
 
   filesScanned++;
-  const sessionId = file.replace(/(-topic-\d+)?\.jsonl$/, '');
+  const sessionId = file.replace(/(-topic-\d+)?\.jsonl(\.deleted\.\d+|\.reset\.\d+)?$/, '');
+
+  // Skip cron and subagent sessions — automated output, not conversation
+  const sessionType = sessionTypeMap[sessionId];
+  if (sessionType === 'cron') { skippedCron++; continue; }
+  if (sessionType === 'subagent') { skippedSubagent++; continue; }
+
   const groupName = sessionGroupMap[sessionId] || null;
 
   const lines = fs.readFileSync(filePath, 'utf8').split('\n').filter(Boolean);
@@ -309,6 +335,9 @@ for (const file of sessionFiles) {
 
       const msg = obj.message;
       if (!msg || !msg.role) continue;
+
+      // Skip delivery-mirror messages — internal delivery confirmations, not conversation
+      if (msg.model === 'delivery-mirror' || msg.provider === 'openclaw') continue;
 
       const ts = obj.timestamp ? new Date(obj.timestamp).getTime()
                 : msg.timestamp ? (typeof msg.timestamp === 'number' ? msg.timestamp : new Date(msg.timestamp).getTime())
@@ -463,7 +492,7 @@ fs.writeFileSync(outPath, output.join('\n'), 'utf8');
 
 // 9. Stats
 console.log(`Written ${merged.length} entries to ${outPath}`);
-console.log(`  Sessions scanned: ${filesScanned} | Voice: ${voiceLoaded ? 'yes' : 'no'} | Skipped(oversize): ${filesSkipped}`);
+console.log(`  Sessions scanned: ${filesScanned} | Voice: ${voiceLoaded ? 'yes' : 'no'} | Skipped(oversize): ${filesSkipped} | Skipped(cron): ${skippedCron} | Skipped(subagent): ${skippedSubagent}`);
 console.log(`  Raw: ${stats.total} → Kept: ${stats.kept} → Merged: ${merged.length} | Skipped: ${stats.skipped}`);
 for (const [reason, count] of Object.entries(stats.skipReasons).sort((a, b) => b[1] - a[1])) {
   console.log(`    ${reason}: ${count}`);

@@ -42,7 +42,7 @@ mkdir -p memory/transcripts memory/projects memory/voice scripts
 ### A2. 脚本
 
 从本 skill 的 `scripts/` 目录复制到 workspace 的 `scripts/`：
-- `merge-daily-transcript.js` → 对话合并
+- `merge-daily-transcript.js` → 对话合并（支持归档文件 `.deleted`/`.reset`、session 类型过滤、delivery-mirror 过滤）
 - `auto-commit.sh` → Git 自动提交
 
 验证：两个文件都在 `scripts/` 下。
@@ -57,6 +57,8 @@ mkdir -p memory/transcripts memory/projects memory/voice scripts
 ```
 
 `role` 用 `"user"` 或 `"assistant"`，不要用实际名字。merge 脚本依赖这个字段区分发话人。
+
+**STT 适配建议：** 如果你的语音转写工具（Whisper CLI、mlx_whisper 等）在输出中混入了时间戳、进度条、模型加载信息等非文本内容，建议写一个 adapter 脚本：接受音频文件路径作为输入，内部调用 STT 工具并清洗输出，只把纯文本写到 stdout。这是经典的 adapter pattern——把不干净的接口包装成干净的接口。具体实现取决于你用的 STT 工具，agent 可以自行判断。
 
 ### A4. ⚠️ 合并输出的名字
 

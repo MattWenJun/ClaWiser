@@ -12,6 +12,8 @@
 | Compaction 消息 | 上下文压缩机制 | 包含 `Post-Compaction Audit`、`Pre-compaction memory flush` |
 | 系统消息 | 平台控制信号 | 包含 `[System Message]`、`Queued announce` |
 | 静默回复 | agent 无需回复时 | 完整消息为 `NO_REPLY` |
+| Cron/Subagent session | 自动化任务产生的整个会话 | sessions.json 中 `kind`/`type` 为 `cron` 或 `subagent`。**在 merge 入口层按 session 类型整个跳过**，不进入文本分析 |
+| Delivery-mirror 消息 | 内部投递确认（LLM 响应副本） | 消息的 `model === 'delivery-mirror'` 或 `provider === 'openclaw'`。**在 merge 入口层按消息元数据过滤** |
 
 ## 渠道级噪声（聊天平台注入）
 

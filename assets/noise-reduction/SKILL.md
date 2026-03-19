@@ -13,6 +13,26 @@ tags: [memory, noise-reduction, clawiser]
 
 **信号 = 用户与 agent 的对话（双方发言）。其他一切 = 管道噪声。** 管道噪声包括工具调用、系统提示、metadata 注入、heartbeat 协议、JSON 输出、内部独白。
 
+## 两层降噪架构
+
+降噪在两个层面发生，顺序很重要——**先用结构化信号在入口处拦截，再用文本模式匹配清理余量。**
+
+### Layer 1：Merge 入口层（结构化过滤，内置）
+
+merge 脚本在读取 session 文件时，利用 `sessions.json` 的结构化元数据做第一轮过滤：
+
+- **Session 类型过滤**：cron 和 subagent 类型的 session 整个跳过。这些是自动化输出，不是人机对话。判断依据是 `sessions.json` 中每个 session 的 `kind` / `type` 字段。
+- **消息元数据过滤**：`delivery-mirror` 消息（`model === 'delivery-mirror'` 或 `provider === 'openclaw'`）被跳过。这些是内部投递确认，是 LLM 响应的副本。
+- **归档文件支持**：`.jsonl.deleted.*` 和 `.jsonl.reset.*` 文件也会被读取——这些是 compaction 和 /new 操作归档的对话数据，包含真实内容。
+
+**为什么在入口层做？** 因为这些信号是结构化的（JSON 字段、文件名 pattern），100% 确定，零误杀风险。在数据进入文本分析之前就拦截，既减少了后续处理量，也避免了用文本 pattern 去猜测 session 类型的脆弱性。
+
+### Layer 2：文本模式匹配层（按环境配置）
+
+经过 Layer 1 之后的数据仍然包含噪声——heartbeat、系统消息、工具输出、内部独白等。这些噪声的特征是**文本层面的**，需要 pattern matching 来识别。这就是本 skill 的核心工作：诊断你的环境有哪些噪声 pattern，编写对应的过滤规则。
+
+**判断标准：** Layer 1 处理的是"这整个 session / 消息不该出现"（结构性排除），Layer 2 处理的是"这条消息的内容是噪声"（内容性过滤）。如果你发现某类噪声可以用结构化元数据 100% 确定，优先在 merge 脚本的入口层处理，而不是写文本 pattern。
+
 ## 前置条件
 
 - 已执行 `memory-deposit`，有 merge 脚本和 transcripts 目录

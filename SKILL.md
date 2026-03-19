@@ -84,7 +84,7 @@ cp -r ${CLAUDE_SKILL_DIR}/assets/noise-reduction "$SKILL_DIR/"
 
 #### 2c. noise-reduction（数据降噪）
 
-先派子 agent **立即执行一次**降噪诊断：读 `noise-reduction/SKILL.md`，对已有对话数据执行 Step 1-2（采样 + 噪声画像）。如果已有足够数据且压缩率 > 50%，继续执行 Step 3-5 编写降噪规则。
+先派子 agent **立即执行一次**降噪诊断：读 `noise-reduction/SKILL.md`，对已有对话数据执行 Step 1-2（采样 + 噪声画像）。如果已有足够数据且压缩率 > 50%，继续执行 Step 3-5 编写降噪规则。noise-reduction 现在分两层工作：merge 入口层的结构化过滤（session 类型 + 消息元数据，内置于 merge 脚本）和文本模式匹配层（由 agent 根据环境诊断配置）。
 
 同时创建定期 cron 任务，每周自动检查：
 
