@@ -128,23 +128,34 @@ cd ~/.openclaw/workspace && git init
 
 | 方案 | 模型 | 价格 | 说明 |
 |------|------|------|------|
-| **Gemini** | `gemini-embedding-001` | 免费额度大 | 配置最简单 |
-| **硅基流动 SiliconFlow** | `BAAI/bge-large-zh-v1.5` 或 `BAAI/bge-m3` | 免费（注册送额度） | 中文效果好，OpenAI 兼容接口 |
-| **OpenAI** | `text-embedding-3-small` | 付费 | 效果稳定 |
-| **Voyage / Mistral** | 各自默认模型 | 付费 | 都可以 |
+| **Gemini** | `gemini-embedding-001` | 很低 | MTEB 总分第一，配置最简单 |
+| **阿里云百炼 DashScope** | `text-embedding-v4` | 很低 | OpenAI 兼容接口 |
+| **OpenAI** | `text-embedding-3-small` | 很低 | 效果稳定 |
 
-硅基流动配置方式（provider 设为 openai，用自定义 baseUrl）：
+配置示例：
+
+Gemini：
+```json5
+memorySearch: { provider: "gemini", remote: { apiKey: "<Gemini API Key>" } }
+```
+
+OpenAI：
+```json5
+memorySearch: { provider: "openai", remote: { apiKey: "<OpenAI API Key>" } }
+```
+
+阿里云百炼（OpenAI 兼容）：
 ```json5
 memorySearch: {
   provider: "openai",
-  model: "BAAI/bge-large-zh-v1.5",
+  model: "text-embedding-v4",
   remote: {
-    baseUrl: "https://api.siliconflow.cn/v1",
-    apiKey: "<你的 SiliconFlow API Key>"
+    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    apiKey: "<DashScope API Key>"
   }
 }
 ```
-注册地址：https://siliconflow.cn — 注册后在控制台获取 API Key。
+API Key 获取：https://bailian.console.aliyun.com/
 
 确认用户选定方案后，用 `gateway(action=config.patch)` 帮用户配好，再跑一次 `memory_search` 验证。
 
