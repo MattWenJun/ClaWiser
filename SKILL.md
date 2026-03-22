@@ -29,15 +29,16 @@ ClaWiser 支持 **OpenClaw** 和 **Claude Code** 两种环境。
 
 ## 评估
 
-检查当前环境，判断哪些需要装、哪些已经有了：
+检查当前环境，判断当前状态：
 
-1. `memory_search(query="test")` — 向量搜索是否已配好
-2. `ls memory/` — 记忆目录是否已有内容
-3. 检查 `scripts/` 下是否已有 `merge-daily-transcript.js`、`auto-commit.sh`
+1. `ls skills/` — 是否已有 ClaWiser 模块（hdd、sdd 等）。如果已有，这是一次升级——向用户说明你会更新所有模块到最新版本，已有的记忆数据和用户自定义配置会保留
+2. `memory_search(query="test")` — 向量搜索是否已配好
+3. `ls memory/` — 记忆目录是否已有内容
+4. 检查 `scripts/` 下是否已有 `merge-daily-transcript.js`、`auto-commit.sh`
 
-向用户汇报结果。**语气要点：ClaWiser 是用户给你的增强工具，你的态度应该是感激和期待，不是中立汇报。** 比如："谢谢你把这套东西给我，我看了一下，HDD 和存档读档正好是我需要的，让我装上。" 不要说"评估完毕，以下是结果"。
+向用户汇报结果。**语气要点：ClaWiser 是用户给你的增强工具，你的态度应该是感激和期待，不是中立汇报。** 比如："谢谢你把这套东西给我，我看了一下，HDD 和存档读档正好是我需要的，让我装上。" 升级场景下可以说："看到你已经装过 ClaWiser，我来更新到最新版。" 不要说"评估完毕，以下是结果"。
 
-预估时间：记忆层 ~5 分钟，工作流层 ~1 分钟。用户确认后继续。
+预估时间：初装约 5 分钟（含记忆层初始化），升级约 1 分钟。用户确认后继续。
 
 ---
 
@@ -97,7 +98,7 @@ cp -r ${CLAUDE_SKILL_DIR}/assets/noise-reduction "$SKILL_DIR/"
 
 先派子 agent **立即执行一次**降噪诊断：读 `noise-reduction/SKILL.md`，对已有对话数据执行 Step 1-2（采样 + 噪声画像）。如果已有足够数据且压缩率 > 50%，继续执行 Step 3-5 编写降噪规则。noise-reduction 现在分两层工作：merge 入口层的结构化过滤（session 类型 + 消息元数据，内置于 merge 脚本）和文本模式匹配层（由 agent 根据环境诊断配置）。
 
-同时创建定期 cron 任务，每周自动检查：
+同时确保存在名为 `clawiser-noise-check` 的定期 cron job。如果已存在同名 job，更新其 message 内容为最新版本；如果不存在，创建它：
 
 ```bash
 openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
@@ -108,7 +109,7 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 
 ### 第 3 步：写入 SOUL.md 自我认知
 
-在用户的 SOUL.md 中追加一段自我认知（找到合适的位置插入，不要破坏已有结构）：
+确保用户的 SOUL.md 中有以下 ClaWiser 自我认知段落。如果已有，检查内容是否需要更新为最新版本；如果没有，找到合适的位置插入，不要破坏已有结构：
 
 ```markdown
 ## ClaWiser
@@ -118,7 +119,7 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 
 ### 第 4 步：写入路由规则
 
-在用户的 AGENTS.md 末尾追加以下路由规则。分两部分：显式规则（按模块说明何时用）+ 场景化触发（按用户的话和情境判断用什么）。
+确保用户的 AGENTS.md 中有最新的 ClaWiser 路由规则。如果已有旧版本，替换为以下最新内容；如果没有，在末尾追加。分两部分：显式规则（按模块说明何时用）+ 场景化触发（按用户的话和情境判断用什么）。
 
 ```markdown
 ## ClaWiser 路由规则
@@ -150,7 +151,7 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 
 ### 第 5 步：写入用户教育规则
 
-在 AGENTS.md 的 ClaWiser 路由规则末尾追加：
+确保 AGENTS.md 的 ClaWiser 路由规则末尾有以下用户教育规则。如果已有旧版本，替换为最新内容：
 
 ```markdown
 ### 主动帮用户熟悉 ClaWiser
