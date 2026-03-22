@@ -179,7 +179,9 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 
 仅在**初次安装**时执行此步（评估阶段已判断是初装还是升级）。升级时跳过，不发不提。
 
-将 `${CLAUDE_SKILL_DIR}/assets/user-guide-v1.0.pdf` 以**文件附件**的方式发送给用户。必须作为文件/附件消息发送（不是文字消息里贴链接、不是内联预览），确保用户能在自己的设备上保存和阅读这份 PDF。
+将 `${CLAUDE_SKILL_DIR}/assets/user-guide-v1.0.pdf` 以**文件附件**的方式发送给用户。
+
+**⚠️ 必须作为文件/附件消息发送。** 不要发 GitHub 链接、不要发下载链接、不要说"PDF 是二进制文件不方便直接发"——这是错的，所有主流平台（Telegram、Discord、WhatsApp、Slack）都支持发送文件附件，这是基础功能。直接用你的平台工具发文件。
 
 ---
 
