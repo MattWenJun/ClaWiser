@@ -177,7 +177,7 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 
 ### 第 6 步：向用户发送说明书
 
-如果 `${CLAUDE_SKILL_DIR}/assets/user-guide.pdf` 存在，以文件/附件消息的形式发送给用户作为参考。
+检查 `${CLAUDE_SKILL_DIR}/assets/` 下最新的 `user-guide-v*.pdf`（当前为 `user-guide-v1.0.pdf`）。如果用户之前已收到过同版本的说明书，跳过此步，不提。如果用户没有或版本较旧，发送最新版。
 
 ---
 
