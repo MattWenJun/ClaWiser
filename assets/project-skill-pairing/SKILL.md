@@ -1,10 +1,6 @@
 ---
 name: project-skill-pairing
-description: >
-  项目与 Skill 的双向绑定（Project-Skill Pairing）。新建 Skill 时挂靠项目，新建项目时关联 Skill，确保不出现孤悬的 skill 或缺少 skill 支撑的项目。
-  适用于：新建项目或 skill 后需要建立关联、发现 skill 没有归属项目、发现项目缺少配套 skill、整理项目结构时检查完整性。
-  当用户表达类似意图时触发——不限于特定措辞。常见表达举例："建个项目"、"初始化项目"、"新建 skill"、"project init"、"查缺补漏"、"项目结构"、"这个 skill 属于哪个项目"、"项目里缺什么 skill"、"整理一下项目和 skill 的关系"。
-  Agent 也应在创建或修改 Skill 后自动检查项目归属。
+description: "Bidirectional project-skill binding. Creates project directories with HANDOFF.md when a new skill needs a home, symlinks project-born skills back to their parent project, and audits for orphaned skills or unsupported projects. Use when creating projects or skills, checking structural completeness, or when user says '建个项目', '初始化项目', '新建 skill', 'project init', '查缺补漏', '项目结构', '这个 skill 属于哪个项目', '项目里缺什么 skill'. Also activates automatically after skill creation or modification."
 version: 0.1.0
 author: MindCode
 tags: [project-management, skill-management, clawiser]
@@ -12,9 +8,7 @@ tags: [project-management, skill-management, clawiser]
 
 # Project-Skill Pairing — 项目与 Skill 结对
 
-**每个 Skill 必须有项目归属。每个项目必须知道自己关联哪些 Skill。**
-
-Skill 不是孤零零的 prompt 文件。它从项目中长出来，在项目中演化，它为什么长成这样、改过几次、在哪验证过，都要有地方可追。
+**Every Skill must belong to a project. Every project must know its associated Skills.**
 
 ## 核心规则
 
@@ -115,6 +109,15 @@ mkdir -p memory/projects/<name>
 ## ➡️ 下一步
 ## 关键经验 & 铁律
 ## 架构
+```
+
+### 4. Verify pairing
+
+```bash
+# Confirm symlinks resolve correctly
+ls -la memory/projects/<name>/skills/
+# Confirm HANDOFF.md is well-formed
+head -5 memory/projects/<name>/HANDOFF.md
 ```
 
 ---

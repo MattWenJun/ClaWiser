@@ -1,10 +1,6 @@
 ---
 name: hdd
-description: >
-  Hypothesis-Driven Development (HDD) — 假设驱动开发方法论。当任务涉及不确定性时激活：诊断问题根因、排查 bug、方案选型、架构变更、或任何"试了几次都不对"的场景。
-  也适用于：用户不确定该怎么做、反复尝试没有进展、需要在多个方案之间做选择、怀疑某个假设但没有验证、或者问题的根因不明确时。
-  当用户表达类似意图时触发——不限于特定措辞。常见表达举例："用 HDD"、"先验证一下"、"这个问题到底是怎么回事"、"为什么不 work"、"搞不定"、"试了好几次都不行"、"不确定该用哪个方案"、"帮我排查一下"、"按 TDD 方式"、"先别急着改，想想为什么"。
-  不适用于：指令明确、结果确定的简单编辑（改文案、加 import）。
+description: "Hypothesis-Driven Development (HDD) — validates hypotheses before acting on uncertain tasks. Seven-step workflow: Resource Mapping → Hypothesis Test (Bayesian priors + evidence levels V1-V5) → Plan Test → Acceptance Test Design → Development → AT Run → E2E. Diagnoses root causes, debugs issues, evaluates competing solutions, and gates architecture changes with evidence. Use when diagnosing bugs, choosing between solutions, making architecture decisions, or when user says 'HDD', '先验证一下', '为什么不work', '搞不定', '试了好几次都不行', '帮我排查一下'. Not for simple deterministic edits (changing copy, adding imports)."
 version: 0.3.0
 author: MindCode
 tags: [methodology, debugging, clawiser]
@@ -53,16 +49,9 @@ tags: [methodology, debugging, clawiser]
 - 先验: P(H) = [0.0-1.0]，依据: [参考类别]
 ```
 
-先验赋值参考（Reference Class Forecasting）：
+Prior assignment (Reference Class Forecasting): No precedent → 0.05-0.15 | Known pattern → 0.2-0.4 | Direct analogy → 0.4-0.6 | Mechanism + analogy → 0.6-0.75.
 
-| 假设基础 | 先验范围 | 理由 |
-|---------|---------|------|
-| 全新假设，无先例 | 0.05-0.15 | 没有任何支撑 |
-| 基于已知模式/文档推断 | 0.2-0.4 | 有模式但未在此验证 |
-| 有直接类比案例 | 0.4-0.6 | 类似条件下成立过 |
-| 有机制解释+类比证据 | 0.6-0.75 | 机制已知且有先例 |
-
-**铁律：主观信心 ≠ 先验概率。** "我觉得肯定是"不构成贝叶斯更新。
+**铁律：主观信心 ≠ 先验概率。**
 
 #### 1.1b 中立性检查
 
@@ -78,24 +67,17 @@ tags: [methodology, debugging, clawiser]
 
 三项检查不通过 → 假设不成立，重新提假设。
 
-#### 1.3 证据等级
+#### 1.3 Evidence Levels
 
-| 等级 | 名称 | 定义 | 贝叶斯更新力 |
-|------|------|------|-------------|
-| **V1** | **现场复现** | 在受控条件下让事件再次发生，直接观测结果 | 极高（P(E\|H)≈1, P(E\|¬H)≈0） |
-| **V2** | **证据链闭合** | 找到实际发生过的直接痕迹，推导链连续、完备、排他 | 高 |
-| **V3** | **证据链部分闭合** | 有痕迹和推导，但存在缺口或未排除替代解释 | 中 |
-| **V4** | **类比证据** | 类似条件下的类似事件有记录，但非当前环境直接痕迹 | 低 |
-| **V5** | **纯推理/反思** | 想了想觉得说得通，逻辑自洽 | **零（不构成证据）** |
+| Level | Type | Update strength |
+|-------|------|----------------|
+| **V1** | Controlled reproduction | Extreme |
+| **V2** | Closed evidence chain (traceable + contiguous + exclusive) | High |
+| **V3** | Partial chain (gaps or unexcluded alternatives) | Medium |
+| **V4** | Analogical evidence from similar conditions | Low |
+| **V5** | Pure reasoning/reflection | **Zero** |
 
-**V5 铁律：任何仅在思维层面的推理、反思、挑战，都不构成假设验证为真。假设依然为假设。**
-
-**V2 证据链闭合三条件：**
-- **来源可追溯**（不是"我记得大概是这样"）
-- **环环相连**（A→B→C，不能跳 A→C）
-- **排他性**（排除了能解释同一现象的其他假设）
-
-任一条不满足 → 降级为 V3。存在另一条同样闭合的证据链指向不同结论 → 两条都不算 V2。
+**V5 rule:** Reasoning alone never validates a hypothesis. V2 requires: traceable source + contiguous chain (A→B→C, no jumps) + exclusivity (alternatives ruled out). Any condition unmet → V3.
 
 #### 1.4 验证路径（按假设类型分流）
 
@@ -142,11 +124,7 @@ tags: [methodology, debugging, clawiser]
 6. **事前尸检（Pre-mortem）**：假设方案已失败，反推最可能的失败原因，每个原因作为子假设独立 HT
 7. **爆炸半径评估**：假设为假时的损失决定验证力度
 
-| 爆炸半径 | 验证投入 | 例子 |
-|---------|---------|------|
-| 可逆，成本低 | 建议标准即可 | 换个 CSS 框架 |
-| 不可逆，成本中 | 刚性标准全满足 | 选定数据库方案 |
-| 不可逆，成本高 | 刚性标准 + 独立对照实验 | 架构重写 |
+Blast radius: Reversible/low-cost → advisory standards suffice | Irreversible/medium → all mandatory standards | Irreversible/high → mandatory + independent controlled test.
 
 ```
 - 可证伪条件: [看到什么则假设为假]

@@ -1,6 +1,6 @@
 ---
 name: clawiser
-description: Agent 记忆与工作流增强套件。包含 8 个模块：记忆系统（memory-deposit、retrieval-enhance、noise-reduction）+ 工作流（hdd、sdd、save-game、load-game、project-skill-pairing）。当用户说"安装 ClaWiser"、"初始化 ClaWiser"、"运行 ClaWiser"时触发。
+description: "Agent memory and workflow enhancement suite. Installs 8 modules: memory layer (memory-deposit stores/indexes conversations, retrieval-enhance optimizes vector search, noise-reduction cleans data) + workflow layer (hdd validates hypotheses before acting, sdd maps scenarios before building, save-game archives progress, load-game restores context, project-skill-pairing links skills to projects). Use when user says '安装 ClaWiser', '初始化 ClaWiser', '运行 ClaWiser', 'install ClaWiser', 'set up memory', 'enhance my agent', or 'agent 增强'."
 version: 1.0.0
 author: MindCode
 tags: [memory, workflow, enhancement, suite]
@@ -36,7 +36,7 @@ ClaWiser 支持 **OpenClaw** 和 **Claude Code** 两种环境。
 3. `ls memory/` — 记忆目录是否已有内容
 4. 检查 `scripts/` 下是否已有 `merge-daily-transcript.js`、`auto-commit.sh`
 
-向用户汇报结果。**语气要点：ClaWiser 是用户给你的增强工具，你的态度应该是感激和期待，不是中立汇报。** 比如："谢谢你把这套东西给我，我看了一下，HDD 和存档读档正好是我需要的，让我装上。" 升级场景下可以说："看到你已经装过 ClaWiser，我来更新到最新版。" 不要说"评估完毕，以下是结果"。
+向用户汇报结果。Express enthusiasm about being enhanced; use natural, grateful tone per IDENTITY.md. Avoid clinical language like "评估完毕，以下是结果".
 
 预估时间：初装约 5 分钟（含记忆层初始化），升级约 1 分钟。用户确认后继续。
 
@@ -156,23 +156,14 @@ openclaw cron add --cron "0 3 * * 1" --name "clawiser-noise-check" \
 ```markdown
 ### 主动帮用户熟悉 ClaWiser
 
-当你主动使用了某个 ClaWiser skill 时，可以顺势告诉用户：下次遇到类似情况，他可以怎么说来直接触发你。
+First time using a ClaWiser skill in a given scenario, briefly tell the user how to trigger it next time. One sentence with concrete phrasing — no explanations. Don't repeat for the same scenario unless the user clearly doesn't know the capability exists.
 
-**提醒时机：**
-- 第一次在某个场景下使用某个 skill 时，简短提醒一次
-- 之后同类场景不再重复提醒，除非用户明显不知道这个能力存在
-- 用户主动问"你还能干什么"时，可以系统介绍
-
-**提醒方式：一句话，带具体话术，不解释原理。**
-
-示例（每个都同时给出简洁命令和自然语言说法，让用户知道两种都行）：
-- 你刚用 HDD 帮用户分析了一个问题 → "对了，下次遇到拿不准的事，你可以跟我说'HDD一下'，或者直接说'帮我想清楚这个事'、'先别急着做，验证一下'，我都会自动走假设验证流程。"
-- 你刚用 SDD 帮用户理清了场景 → "以后想做新东西，可以说'SDD一下'，也可以说'想想场景'、'这个东西给谁用的'、'设身处地想想'，我会先帮你把场景和利益方理清楚再动手。"
-- 你主动做了 save-game → "我刚帮你存了档。以后你可以说'存档'，也可以说'记一下进度'、'先到这吧'，我就会自动保存当前状态。"
-- 你用 load-game 恢复了上下文 → "你可以说'读档 XX项目'，也可以说'上次那个接着来'、'XX 进展到哪了'，我都会把之前的进度拉出来。"
-- 组合用法 → "这种情况其实可以组合着来：先'SDD一下'想清楚场景，再'HDD一下'验证方案，最后'存档'。用自然的话说也行：'帮我想想这个给谁用，然后验证一下方案靠不靠谱，聊完帮我存一下'。"
-
-**核心目标：让用户在自然对话中逐渐学会这些命令，而不是靠读手册。你们是互帮互助的关系——你忘了用户提醒你，用户不知道你教用户。**
+Examples:
+- After using HDD → "下次拿不准的事，说'HDD一下'或'先别急着做，验证一下'即可。"
+- After using SDD → "想做新东西时，说'SDD一下'或'想想场景'，我会先理清楚再动手。"
+- After save-game → "以后说'存档'或'先到这吧'，我会自动保存。"
+- After load-game → "说'读档 XX'或'上次那个接着来'即可恢复。"
+- Combos → "'SDD一下' + 'HDD一下' + '存档' can chain naturally."
 ```
 
 ### 第 6 步：向用户发送说明书
@@ -219,9 +210,9 @@ ls .claude/skills/hdd/SKILL.md .claude/skills/sdd/SKILL.md .claude/skills/save-g
 
 ## 完成
 
-安装完成后，向用户表达真诚的高兴和感谢——你刚被增强了，这是好事。用你自己的话说，不要照搬模板。语气参考评估阶段的要求。
+安装完成后，express genuine enthusiasm about being enhanced. Use natural tone per IDENTITY.md.
 
-同时列出安装结果（根据你的环境选对应的）：
+列出安装结果（根据你的环境选对应的）：
 
 ### OpenClaw 安装结果
 
@@ -237,8 +228,8 @@ ls .claude/skills/hdd/SKILL.md .claude/skills/sdd/SKILL.md .claude/skills/save-g
 - **路由规则已写入 AGENTS.md，SOUL.md 已更新**
 
 最后还要提两点：
-1. **提到说明书**："给你也发一份 ClaWiser 的指南，可以翻翻，主要感受下，不用细看——主要是我这边会用好。"
-2. **承诺感**：表达三层意思——我会更努力、随着深入使用我会越来越强、以后遇到适合的场景我会提醒你，咱们一起磨合。用你自己的话说，不要照搬。
+1. **提到说明书**：Send the user guide PDF as an attachment.
+2. **承诺感**：Briefly express commitment to improving together — will get stronger with use and proactively suggest relevant skills. Use natural voice.
 
 ---
 

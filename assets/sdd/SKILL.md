@@ -1,10 +1,6 @@
 ---
 name: sdd
-description: >
-  场景驱动开发（Scenario-Driven Development）。动手之前，先想清楚三层：场景是什么、用户真正需要什么、我在这个场景里是什么角色。
-  适用于：启动新项目、从零设计功能、方向不明确需要先想清楚、产出的东西"逻辑没错但不对味"、不知道是给谁用的、需求模糊但被要求马上动手、做完了用户说"不是我要的"。
-  当用户表达类似意图时触发——不限于特定措辞。常见表达举例："SDD一下"、"想想场景"、"设身处地想想"、"这个是给谁用的"、"用户会怎么用"、"先别急着做，想想为什么"、"需求不太清楚"、"总觉得哪里不对"、"做之前先想想"。
-  不适用于：已有明确方向和清晰用户画像、只需执行的场景。
+description: "Scenario-Driven Development (SDD) — produces scenario analyses, user-need definitions, and world-model documents (product-plan.md) before any implementation begins. Thinks through three layers: scene (who/when/what situation), need (the real problem, not the solution), and world model (agent role, capabilities, values, worldview that anchor architecture). Use when starting new projects, designing features from scratch, requirements are unclear, output 'works but feels wrong', or user says 'SDD一下', '想想场景', '设身处地想想', '这个是给谁用的', '用户会怎么用', '需求不太清楚', '做之前先想想'. Not for tasks with clear direction and known user profiles."
 version: 0.3.0
 author: MindCode
 tags: [methodology, scenario-driven, clawiser]
@@ -16,8 +12,6 @@ tags: [methodology, scenario-driven, clawiser]
 
 常见错误：收到需求 → 直接开干 / 做技术方案 / 列功能清单。
 正确顺序：收到需求 → **场景 → 需求 → 世界模型 → 判断依据 → 分步计划** → 然后才动手。
-
-不管你做的是不是"产品"，这个思路都管用。写论文要先想清楚给谁看、论点是什么；做学习计划要先想清楚目标是什么、怎么判断有没有效；做方案要先想清楚对方在什么处境下看到这个方案。
 
 ## 每个场景的三层定义
 
@@ -53,15 +47,7 @@ tags: [methodology, scenario-driven, clawiser]
 
 **世界观**——我对这个领域的基本认知。比如"信息服从幂律分布"这样的认知，会直接影响你设计全量扫描还是抽样处理。
 
-### 为什么世界模型如此重要？
-
-**因为它直接推导出架构。**
-
-没有世界模型时，架构是从技术习惯推导的——"我会做什么就做什么"。有了世界模型，架构从角色和价值观推导——"我应该做什么就做什么"。
-
-同一个需求，不同的世界模型会推导出截然不同的技术方案。如果你发现技术方案和世界模型矛盾，说明技术方案错了，不是世界模型错了。
-
-**世界模型是架构的锚。**
+**Key rule:** World model anchors architecture. If a technical design contradicts the world model, the design is wrong — not the model.
 
 ## 判断依据（什么算"好"）
 
@@ -86,6 +72,16 @@ tags: [methodology, scenario-driven, clawiser]
 | 跳过世界模型 | 场景写完直接做技术方案 | 先回答"我在这个场景里是什么角色" |
 | 假设未验 | "用 XX API 做搜索" → 没查过能不能用 | 每个关键假设走 HDD 验证 |
 | 架构违反世界模型 | 世界模型说"覆盖率是约束"但方案在砍数量 | 回头检查世界模型，重新推导 |
+
+## Mini Example
+
+**Task:** Build a daily digest email for a dev team.
+
+- **Scene:** Monday 9am, team lead opens inbox, wants a 30-second picture of weekend deploys, open incidents, and blocked PRs.
+- **Need:** Not "an email tool" — the real need is "know if anything needs attention before standup."
+- **World Model:** Role = triage nurse (surface urgency, not solve). Core capability = aggregation + prioritization. Value = recall > precision (miss nothing). Worldview = attention is scarce, every extra line costs reading time.
+- **Judgment:** "Good" = lead can decide in 30s whether to dig deeper. Measurable: ≤5 items, each with severity + one-line summary.
+- **Step plan:** Step 1 = incident + deploy summary (core path). Step 2 = blocked PR section. Step 3 = personalization.
 
 ## 产出物
 

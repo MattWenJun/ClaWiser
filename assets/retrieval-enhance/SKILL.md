@@ -1,6 +1,6 @@
 ---
 name: retrieval-enhance
-description: 检索系统守护。静默运行——agent 自主判断何时激活。三种场景：(1) 首次搭建时初始化 memorySearch 管线 (2) 搜索质量下降时自动诊断根因并路由修复 (3) 定期抽检+调参。不由用户触发。
+description: "Retrieval system guardian — initializes memorySearch hybrid pipeline (embedding + BM25 + MMR dedup + temporal decay), diagnoses search quality degradation by routing to root causes (missing data, noise, misconfiguration), and performs periodic query-expansion tuning. Use when memorySearch returns empty or irrelevant results, when search recall drops, when setting up a new workspace, or during scheduled maintenance. Activates autonomously or when user says '搜不到东西', '记忆力不行', '为什么搜出来的都不是我要的', '检索系统', 'search quality'."
 user-invocable: false
 version: 0.3.0
 tags: [memory, search, retrieval, clawiser]
@@ -8,9 +8,9 @@ tags: [memory, search, retrieval, clawiser]
 
 # Retrieval Enhance — 检索系统守护
 
-静默 skill。Agent 自主判断何时激活，用户不需要触发。
+Initializes, diagnoses, and tunes the memorySearch pipeline. Agent activates autonomously or when search quality issues surface.
 
-三种运行模式：**Init**（一次性配置）→ **Diagnose**（事件驱动诊断）→ **Tune**（主动调优）。
+Three operating modes: **Init** (one-time setup) → **Diagnose** (event-driven root-cause analysis) → **Tune** (proactive query-expansion and parameter tuning).
 
 ---
 
@@ -76,15 +76,15 @@ OpenClaw 会自动检测可用的 API key（Gemini → OpenAI → Voyage → Mis
 }
 ```
 
-### 各参数说明
+### Key Parameters
 
-| 参数 | 作用 | 何时调整 |
-|------|------|---------|
-| `mmr.enabled` + `lambda` | 去重，防搜出一堆相似结果 | 日志量大时必须开（ClaWiser 默认帮你开） |
-| `temporalDecay.halfLifeDays` | 最近的优先，30 天后分数减半 | 需要搜 3 月前 → 设 90 天 |
-| `vectorWeight` / `textWeight` | 语义 vs 精确匹配权重 | 搜 ID/代码搜不到 → 提高 textWeight |
-| `extraPaths` | 扩展索引范围 | 有 transcript、额外文档目录时加 |
-| `cache` | 避免重复嵌入同一内容 | ClaWiser 默认帮你开 |
+| Parameter | Purpose | When to adjust |
+|-----------|---------|----------------|
+| `mmr.lambda` | Dedup — prevents near-duplicate results | High log volume (enabled by default) |
+| `temporalDecay.halfLifeDays` | Recency bias — score halves after N days | Need older content → increase to 90 |
+| `vectorWeight` / `textWeight` | Semantic vs exact-match balance | Can't find IDs/code → raise textWeight |
+| `extraPaths` | Expand index scope | Add transcript/doc directories |
+| `cache` | Skip re-embedding unchanged content | Enabled by default |
 
 ---
 
@@ -132,7 +132,7 @@ OpenClaw 会自动检测可用的 API key（Gemini → OpenAI → Voyage → Mis
 
 ### 搜索技术：Query Expansion
 
-单次 `memory_search` 有致命盲区：语义漂移、中英不对称、关键词遗漏。
+Single `memory_search` calls have blind spots: semantic drift, Chinese/English asymmetry, keyword gaps.
 
 **必须走 expansion 的场景：**
 - Compaction 后回答之前的问题
@@ -160,21 +160,19 @@ OpenClaw 会自动检测可用的 API key（Gemini → OpenAI → Voyage → Mis
 
 **豁免：** 简单事实查询、内容还在上下文中、单次搜索 score > 0.75 精确命中。
 
-**性能预算：** 整个流程 < 5 秒（expansion 0s + parallel search ~3s + rerank 0s）。
+**Performance budget:** Full expansion < 5 seconds (parallel search ~3s).
 
-### 外部搜索 Query Expansion
+### External Search Expansion
 
-对 grok_search、web_fetch 等外部搜索同样做 expansion，但**不并行**（有成本）。先搜最佳变体，不理想再补搜。
+Apply expansion to `grok_search`, `web_fetch` etc., but **sequentially** (cost-aware). Try best variant first, supplement if needed.
 
-变体策略：同义改写 + 抽象层级切换 + 生态平台扩展 + 用户视角。
+### Periodic Tuning (heartbeat)
 
-### 主动调优（heartbeat 期间）
-
-定期抽检最近 N 次搜索的命中质量：
-1. 取最近搜索的 top-1 score 分布
-2. 均值 < 0.5 → 可能需要调参或排查数据
-3. 结果同质化严重 → 降低 MMR lambda
-4. 近期内容搜不到 → 检查 temporal decay 半衰期
+Sample recent search hit quality periodically:
+1. Check top-1 score distribution for recent queries
+2. Mean < 0.5 → investigate data or tune parameters
+3. Excessive homogeneity → lower MMR lambda
+4. Recent content missing → check temporal decay halfLife
 
 ---
 
